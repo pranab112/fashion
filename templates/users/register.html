@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register - NEXUS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Create your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Or
+                <a href="{% url 'users:login' %}" class="font-medium text-pink-600 hover:text-pink-500">
+                    sign in to your existing account
+                </a>
+            </p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="rounded-md {% if message.tags == 'error' %}bg-red-50{% else %}bg-green-50{% endif %} p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'error' %}
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    {% else %}
+                    <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-800{% else %}text-green-800{% endif %}">
+                        {{ message }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form class="mt-8 space-y-6" method="POST" action="{% url 'users:register' %}">
+            {% csrf_token %}
+
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="first_name" class="sr-only">First Name</label>
+                    <input id="first_name" name="first_name" type="text" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="First Name">
+                </div>
+                <div>
+                    <label for="last_name" class="sr-only">Last Name</label>
+                    <input id="last_name" name="last_name" type="text" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Last Name">
+                </div>
+                <div>
+                    <label for="email" class="sr-only">Email address</label>
+                    <input id="email" name="email" type="email" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Email address">
+                </div>
+                <div>
+                    <label for="phone" class="sr-only">Phone Number</label>
+                    <input id="phone" name="phone" type="tel" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Phone Number">
+                </div>
+                <div>
+                    <label for="password1" class="sr-only">Password</label>
+                    <input id="password1" name="password1" type="password" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Password">
+                </div>
+                <div>
+                    <label for="password2" class="sr-only">Confirm Password</label>
+                    <input id="password2" name="password2" type="password" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Confirm Password">
+                </div>
+            </div>
+
+            <!-- Password Requirements -->
+            <div class="text-sm text-gray-600">
+                <p class="mb-1">Password must:</p>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li id="length-check">Be at least 8 characters long</li>
+                    <li id="number-check">Contain at least one number</li>
+                    <li id="uppercase-check">Contain at least one uppercase letter</li>
+                    <li id="lowercase-check">Contain at least one lowercase letter</li>
+                    <li id="special-check">Contain at least one special character</li>
+                    <li id="match-check">Passwords must match</li>
+                </ul>
+            </div>
+
+            <div class="flex items-center">
+                <input id="terms" name="terms" type="checkbox" required
+                       class="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded">
+                <label for="terms" class="ml-2 block text-sm text-gray-900">
+                    I agree to the Terms and Conditions and Privacy Policy
+                </label>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-pink-500 group-hover:text-pink-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                    Create Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Password validation
+    const password1 = document.getElementById('password1');
+    const password2 = document.getElementById('password2');
+    const lengthCheck = document.getElementById('length-check');
+    const numberCheck = document.getElementById('number-check');
+    const uppercaseCheck = document.getElementById('uppercase-check');
+    const lowercaseCheck = document.getElementById('lowercase-check');
+    const specialCheck = document.getElementById('special-check');
+    const matchCheck = document.getElementById('match-check');
+
+    function validatePassword() {
+        const password = password1.value;
+        const confirmPassword = password2.value;
+
+        // Length check
+        if (password.length >= 8) {
+            lengthCheck.classList.add('text-green-600');
+        } else {
+            lengthCheck.classList.remove('text-green-600');
+        }
+
+        // Number check
+        if (/\d/.test(password)) {
+            numberCheck.classList.add('text-green-600');
+        } else {
+            numberCheck.classList.remove('text-green-600');
+        }
+
+        // Uppercase check
+        if (/[A-Z]/.test(password)) {
+            uppercaseCheck.classList.add('text-green-600');
+        } else {
+            uppercaseCheck.classList.remove('text-green-600');
+        }
+
+        // Lowercase check
+        if (/[a-z]/.test(password)) {
+            lowercaseCheck.classList.add('text-green-600');
+        } else {
+            lowercaseCheck.classList.remove('text-green-600');
+        }
+
+        // Special character check
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            specialCheck.classList.add('text-green-600');
+        } else {
+            specialCheck.classList.remove('text-green-600');
+        }
+
+        // Match check
+        if (password && password === confirmPassword) {
+            matchCheck.classList.add('text-green-600');
+        } else {
+            matchCheck.classList.remove('text-green-600');
+        }
+    }
+
+    password1.addEventListener('input', validatePassword);
+    password2.addEventListener('input', validatePassword);
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const firstName = document.getElementById('first_name').value;
+        const lastName = document.getElementById('last_name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const terms = document.getElementById('terms').checked;
+
+        if (!firstName || !lastName || !email || !phone || !password1.value || !password2.value) {
+            e.preventDefault();
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        if (!isValidEmail(email)) {
+            e.preventDefault();
+            showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+
+        if (!isValidPhone(phone)) {
+            e.preventDefault();
+            showNotification('Please enter a valid phone number', 'error');
+            return;
+        }
+
+        if (!isValidPassword(password1.value)) {
+            e.preventDefault();
+            showNotification('Password does not meet requirements', 'error');
+            return;
+        }
+
+        if (password1.value !== password2.value) {
+            e.preventDefault();
+            showNotification('Passwords do not match', 'error');
+            return;
+        }
+
+        if (!terms) {
+            e.preventDefault();
+            showNotification('Please accept the terms and conditions', 'error');
+            return;
+        }
+    });
+
+    function isValidEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    function isValidPhone(phone) {
+        const re = /^\d{10}$/;
+        return re.test(phone);
+    }
+
+    function isValidPassword(password) {
+        return password.length >= 8 &&
+               /\d/.test(password) &&
+               /[A-Z]/.test(password) &&
+               /[a-z]/.test(password) &&
+               /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        }`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

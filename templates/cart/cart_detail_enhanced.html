@@ -1,0 +1,562 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Breadcrumbs -->
+        <nav class="text-sm mb-6">
+            <ol class="list-none p-0 inline-flex text-gray-600">
+                <li class="flex items-center">
+                    <a href="{% url 'core:home' %}" class="hover:text-pink-600 transition duration-200">Home</a>
+                    <i class="fas fa-chevron-right mx-3 text-xs"></i>
+                </li>
+                <li class="text-gray-900 font-medium">Shopping Cart</li>
+            </ol>
+        </nav>
+
+        {% if cart_items %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="p-6 border-b">
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            Shopping Cart 
+                            <span class="text-lg font-normal text-gray-600">({{ cart_items|length }} items)</span>
+                        </h1>
+                    </div>
+                    
+                    <div class="divide-y">
+                        {% for item in cart_items %}
+                        <div class="p-6 hover:bg-gray-50 transition duration-200" id="cart-item-{{ item.id }}">
+                            <div class="flex gap-4">
+                                <!-- Product Image -->
+                                <div class="flex-shrink-0">
+                                    <a href="{{ item.product.get_absolute_url }}">
+                                        <img src="{{ item.product.get_primary_image.url }}"
+                                             alt="{{ item.product.name }}"
+                                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition duration-200">
+                                    </a>
+                                </div>
+
+                                <!-- Product Details -->
+                                <div class="flex-1">
+                                    <div class="flex justify-between">
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                                <a href="{{ item.product.get_absolute_url }}" 
+                                                   class="hover:text-pink-600 transition duration-200">
+                                                    {{ item.product.name }}
+                                                </a>
+                                            </h3>
+                                            <p class="text-sm text-gray-600 mb-2">{{ item.product.brand.name }}</p>
+                                            
+                                            <!-- Variants -->
+                                            <div class="flex gap-4 text-sm text-gray-600">
+                                                {% if item.size %}
+                                                <span class="flex items-center">
+                                                    <span class="font-medium">Size:</span>
+                                                    <span class="ml-1 px-2 py-0.5 bg-gray-100 rounded">{{ item.size }}</span>
+                                                </span>
+                                                {% endif %}
+                                                {% if item.color %}
+                                                <span class="flex items-center">
+                                                    <span class="font-medium">Color:</span>
+                                                    <span class="ml-1">{{ item.color }}</span>
+                                                </span>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Stock Status -->
+                                            {% if item.product.stock < 10 %}
+                                            <p class="text-sm text-orange-600 mt-2">
+                                                <i class="fas fa-exclamation-circle mr-1"></i>
+                                                Only {{ item.product.stock }} left in stock
+                                            </p>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Price -->
+                                        <div class="text-right">
+                                            {% if item.product.sale_price %}
+                                            <p class="text-2xl font-bold text-gray-900">₹{{ item.product.sale_price }}</p>
+                                            <p class="text-sm text-gray-500 line-through">₹{{ item.product.price }}</p>
+                                            <p class="text-sm text-green-600 font-medium">
+                                                {{ item.product.discount_percentage }}% OFF
+                                            </p>
+                                            {% else %}
+                                            <p class="text-2xl font-bold text-gray-900">₹{{ item.product.price }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="flex justify-between items-center mt-4">
+                                        <div class="flex items-center gap-4">
+                                            <!-- Quantity Selector -->
+                                            <div class="quantity-input">
+                                                <button data-decrement onclick="updateQuantity('{{ item.id }}', {{ item.quantity }} - 1)">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                                <input type="number" 
+                                                       value="{{ item.quantity }}" 
+                                                       min="1" 
+                                                       max="{{ item.product.stock }}"
+                                                       id="quantity-{{ item.id }}"
+                                                       onchange="updateQuantity('{{ item.id }}', this.value)">
+                                                <button data-increment onclick="updateQuantity('{{ item.id }}', {{ item.quantity }} + 1)">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <button onclick="moveToWishlist('{{ item.id }}')"
+                                                    class="text-sm text-gray-600 hover:text-pink-600 transition duration-200">
+                                                <i class="far fa-heart mr-1"></i>
+                                                Save for later
+                                            </button>
+                                            <button onclick="removeItem('{{ item.id }}')"
+                                                    class="text-sm text-gray-600 hover:text-red-600 transition duration-200">
+                                                <i class="far fa-trash-alt mr-1"></i>
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <!-- Subtotal -->
+                                        <div class="text-right">
+                                            <p class="text-sm text-gray-600">Subtotal</p>
+                                            <p class="text-xl font-bold text-gray-900" id="subtotal-{{ item.id }}">
+                                                ₹{{ item.get_subtotal }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Saved for Later -->
+                {% if saved_items %}
+                <div class="mt-8 bg-white rounded-xl shadow-sm">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-bold text-gray-900">
+                            Saved for Later
+                            <span class="text-base font-normal text-gray-600">({{ saved_items|length }} items)</span>
+                        </h2>
+                    </div>
+                    
+                    <div class="divide-y">
+                        {% for item in saved_items %}
+                        <div class="p-6 hover:bg-gray-50 transition duration-200">
+                            <div class="flex gap-4">
+                                <img src="{{ item.product.get_primary_image.url }}"
+                                     alt="{{ item.product.name }}"
+                                     class="w-24 h-24 object-cover rounded-lg">
+                                
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-900">{{ item.product.name }}</h4>
+                                    <p class="text-sm text-gray-600">{{ item.product.brand.name }}</p>
+                                    
+                                    <div class="mt-2">
+                                        {% if item.product.sale_price %}
+                                        <span class="text-lg font-bold text-gray-900">₹{{ item.product.sale_price }}</span>
+                                        <span class="text-sm text-gray-500 line-through ml-2">₹{{ item.product.price }}</span>
+                                        {% else %}
+                                        <span class="text-lg font-bold text-gray-900">₹{{ item.product.price }}</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <button onclick="moveToCart('{{ item.id }}')"
+                                            class="mt-3 text-sm text-pink-600 hover:text-pink-700 font-medium">
+                                        Move to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+
+                    <!-- Coupon Section -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-tag mr-2 text-pink-600"></i>
+                                Apply Coupon
+                            </span>
+                            {% if applied_coupon %}
+                            <button onclick="removeCoupon()" class="text-sm text-red-600 hover:text-red-700">
+                                Remove
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        {% if not applied_coupon %}
+                        <div class="flex gap-2">
+                            <input type="text" 
+                                   id="coupon-code" 
+                                   placeholder="Enter coupon code"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                            <button onclick="applyCoupon()"
+                                    class="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition duration-200">
+                                Apply
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p class="text-sm text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Coupon "{{ applied_coupon.code }}" applied
+                            </p>
+                            <p class="text-xs text-green-600 mt-1">
+                                You saved ₹{{ coupon_discount }}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Price Details -->
+                    <div class="space-y-3 pb-6 border-b">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Price ({{ cart_items|length }} items)</span>
+                            <span class="font-medium text-gray-900">₹{{ cart_subtotal }}</span>
+                        </div>
+                        
+                        {% if total_discount > 0 %}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Discount</span>
+                            <span class="font-medium text-green-600">-₹{{ total_discount }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if applied_coupon %}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Coupon Discount</span>
+                            <span class="font-medium text-green-600">-₹{{ coupon_discount }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Delivery Charges</span>
+                            {% if delivery_charges > 0 %}
+                            <span class="font-medium text-gray-900">₹{{ delivery_charges }}</span>
+                            {% else %}
+                            <span class="font-medium text-green-600">FREE</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="py-4 border-b">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span class="text-gray-900">Total Amount</span>
+                            <span class="text-gray-900">₹{{ cart_total }}</span>
+                        </div>
+                        {% if total_savings > 0 %}
+                        <p class="text-sm text-green-600 mt-1">
+                            You will save ₹{{ total_savings }} on this order
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Checkout Button -->
+                    <button onclick="proceedToCheckout()"
+                            class="w-full mt-6 bg-gradient-to-r from-pink-500 to-pink-600 text-white py-3 px-4 rounded-lg font-medium hover:from-pink-600 hover:to-pink-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        Proceed to Checkout
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+
+                    <!-- Security Info -->
+                    <div class="mt-6 text-center">
+                        <p class="text-xs text-gray-500">
+                            <i class="fas fa-lock mr-1"></i>
+                            Safe and Secure Payments. 100% Authentic products.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Delivery Info -->
+                <div class="mt-6 bg-blue-50 rounded-xl p-4">
+                    <h3 class="text-sm font-medium text-blue-900 mb-2">
+                        <i class="fas fa-truck mr-2"></i>
+                        Delivery Information
+                    </h3>
+                    <ul class="text-xs text-blue-800 space-y-1">
+                        <li>• Free delivery on orders above ₹999</li>
+                        <li>• Express delivery available</li>
+                        <li>• Easy 30-day returns</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty Cart -->
+        <div class="max-w-md mx-auto text-center py-16">
+            <div class="bg-white rounded-xl shadow-sm p-12">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-shopping-cart text-4xl text-gray-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
+                <p class="text-gray-600 mb-8">Looks like you haven't added anything to your cart yet</p>
+                
+                <a href="{% url 'products:product_list' %}"
+                   class="inline-block bg-pink-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-pink-700 transition duration-300 shadow-md hover:shadow-lg">
+                    Start Shopping
+                </a>
+                
+                {% if user.is_authenticated and wishlist_count > 0 %}
+                <p class="mt-6 text-sm text-gray-600">
+                    You have {{ wishlist_count }} items in your 
+                    <a href="{% url 'cart:wishlist' %}" class="text-pink-600 hover:text-pink-700 font-medium">wishlist</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notification-container" class="fixed bottom-4 right-4 z-50"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update quantity
+    function updateQuantity(itemId, newQuantity) {
+        const input = document.getElementById(`quantity-${itemId}`);
+        const max = parseInt(input.max);
+        
+        newQuantity = parseInt(newQuantity);
+        if (newQuantity < 1 || newQuantity > max) {
+            showNotification('Invalid quantity', 'error');
+            return;
+        }
+
+        // Show loading state
+        input.disabled = true;
+        
+        fetch(`/api/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ quantity: newQuantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI without reload
+                input.value = newQuantity;
+                document.getElementById(`subtotal-${itemId}`).textContent = `₹${data.item_subtotal}`;
+                updateOrderSummary(data);
+                showNotification('Cart updated', 'success');
+            } else {
+                showNotification(data.error || 'Failed to update cart', 'error');
+                input.value = data.current_quantity || input.value;
+            }
+        })
+        .catch(error => {
+            showNotification('Network error', 'error');
+        })
+        .finally(() => {
+            input.disabled = false;
+        });
+    }
+
+    // Remove item
+    function removeItem(itemId) {
+        if (!confirm('Remove this item from cart?')) return;
+
+        const itemElement = document.getElementById(`cart-item-${itemId}`);
+        itemElement.style.opacity = '0.5';
+
+        fetch(`/api/cart/remove/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                itemElement.remove();
+                updateOrderSummary(data);
+                showNotification('Item removed', 'success');
+                
+                if (data.cart_empty) {
+                    location.reload();
+                }
+            } else {
+                itemElement.style.opacity = '1';
+                showNotification(data.error || 'Failed to remove item', 'error');
+            }
+        })
+        .catch(error => {
+            itemElement.style.opacity = '1';
+            showNotification('Network error', 'error');
+        });
+    }
+
+    // Move to wishlist
+    function moveToWishlist(itemId) {
+        fetch(`/api/cart/move-to-wishlist/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showNotification(data.error || 'Failed to save item', 'error');
+            }
+        });
+    }
+
+    // Move to cart
+    function moveToCart(itemId) {
+        fetch(`/api/wishlist/move-to-cart/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showNotification(data.error || 'Failed to move item', 'error');
+            }
+        });
+    }
+
+    // Apply coupon
+    function applyCoupon() {
+        const code = document.getElementById('coupon-code').value.trim();
+        if (!code) {
+            showNotification('Please enter a coupon code', 'error');
+            return;
+        }
+
+        fetch('/api/cart/apply-coupon/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code: code })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showNotification(data.error || 'Invalid coupon code', 'error');
+            }
+        });
+    }
+
+    // Remove coupon
+    function removeCoupon() {
+        fetch('/api/cart/remove-coupon/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    // Proceed to checkout
+    function proceedToCheckout() {
+        window.location.href = "{% url 'cart:checkout' %}";
+    }
+
+    // Update order summary
+    function updateOrderSummary(data) {
+        // Update cart count in header
+        const cartBadge = document.querySelector('.badge');
+        if (cartBadge) {
+            cartBadge.textContent = data.cart_count;
+        }
+        
+        // Update summary values if provided
+        if (data.summary) {
+            // Update subtotal, discount, total etc.
+            location.reload(); // For now, reload to get updated values
+        }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('notification-container');
+        const notification = document.createElement('div');
+        
+        notification.className = `
+            flex items-center p-4 mb-4 rounded-lg shadow-lg transform transition-all duration-300 ease-out
+            ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}
+            text-white translate-x-full
+        `;
+        
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-3"></i>
+            <span class="font-medium">${message}</span>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

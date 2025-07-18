@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Steps -->
+        <div class="max-w-3xl mx-auto mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-pink-600 text-white rounded-full flex items-center justify-center font-semibold">
+                        1
+                    </div>
+                    <span class="ml-3 font-medium text-gray-900">Address</span>
+                </div>
+                <div class="flex-1 h-0.5 bg-gray-300 mx-4"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold">
+                        2
+                    </div>
+                    <span class="ml-3 font-medium text-gray-600">Payment</span>
+                </div>
+                <div class="flex-1 h-0.5 bg-gray-300 mx-4"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold">
+                        3
+                    </div>
+                    <span class="ml-3 font-medium text-gray-600">Review</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Delivery Address -->
+                <div class="bg-white rounded-xl shadow-sm mb-6">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-bold text-gray-900">Delivery Address</h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        {% if user_addresses %}
+                        <!-- Saved Addresses -->
+                        <div class="space-y-4 mb-6">
+                            {% for address in user_addresses %}
+                            <label class="block cursor-pointer">
+                                <input type="radio" 
+                                       name="delivery_address" 
+                                       value="{{ address.id }}"
+                                       {% if address.is_default %}checked{% endif %}
+                                       class="sr-only peer">
+                                <div class="border-2 rounded-lg p-4 peer-checked:border-pink-600 peer-checked:bg-pink-50 transition duration-200">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-900">{{ address.name }}</h4>
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                {{ address.address_line_1 }}<br>
+                                                {% if address.address_line_2 %}{{ address.address_line_2 }}<br>{% endif %}
+                                                {{ address.city }}, {{ address.state }} {{ address.pincode }}<br>
+                                                Phone: {{ address.phone }}
+                                            </p>
+                                            {% if address.is_default %}
+                                            <span class="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                                Default Address
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <button onclick="editAddress({{ address.id }})" 
+                                                class="text-sm text-pink-600 hover:text-pink-700">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Add New Address Button -->
+                        <button onclick="showAddressForm()" 
+                                class="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-pink-600 hover:text-pink-600 transition duration-200">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add New Address
+                        </button>
+
+                        <!-- New Address Form (Hidden by default) -->
+                        <div id="new-address-form" class="hidden mt-6">
+                            <form class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                        <input type="text" name="name" required
+                                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                        <input type="tel" name="phone" required
+                                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
+                                    <input type="text" name="address_line_1" required
+                                           class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2 (Optional)</label>
+                                    <input type="text" name="address_line_2"
+                                           class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                        <input type="text" name="city" required
+                                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                        <input type="text" name="state" required
+                                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
+                                        <input type="text" name="pincode" required pattern="[0-9]{6}"
+                                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="is_default" id="is_default"
+                                           class="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded">
+                                    <label for="is_default" class="ml-2 text-sm text-gray-700">
+                                        Set as default address
+                                    </label>
+                                </div>
+                                
+                                <div class="flex gap-4">
+                                    <button type="submit" 
+                                            class="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition duration-200">
+                                        Save Address
+                                    </button>
+                                    <button type="button" onclick="hideAddressForm()"
+                                            class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Options -->
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-bold text-gray-900">Delivery Options</h2>
+                    </div>
+                    
+                    <div class="p-6 space-y-4">
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="delivery_option" value="standard" checked class="sr-only peer">
+                            <div class="border-2 rounded-lg p-4 peer-checked:border-pink-600 peer-checked:bg-pink-50 transition duration-200">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">Standard Delivery</h4>
+                                        <p class="text-sm text-gray-600">Delivered in 5-7 business days</p>
+                                    </div>
+                                    <span class="font-semibold text-green-600">FREE</span>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="delivery_option" value="express" class="sr-only peer">
+                            <div class="border-2 rounded-lg p-4 peer-checked:border-pink-600 peer-checked:bg-pink-50 transition duration-200">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">Express Delivery</h4>
+                                        <p class="text-sm text-gray-600">Delivered in 2-3 business days</p>
+                                    </div>
+                                    <span class="font-semibold text-gray-900">₹99</span>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+
+                    <!-- Items -->
+                    <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                        {% for item in cart_items %}
+                        <div class="flex gap-3">
+                            <img src="{{ item.product.get_primary_image.url }}"
+                                 alt="{{ item.product.name }}"
+                                 class="w-16 h-16 object-cover rounded">
+                            <div class="flex-1">
+                                <h4 class="text-sm font-medium text-gray-900">{{ item.product.name }}</h4>
+                                <p class="text-xs text-gray-600">
+                                    Qty: {{ item.quantity }} | 
+                                    {% if item.size %}Size: {{ item.size }} | {% endif %}
+                                    {% if item.color %}Color: {{ item.color }}{% endif %}
+                                </p>
+                                <p class="text-sm font-semibold text-gray-900 mt-1">
+                                    ₹{{ item.get_subtotal }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Price Details -->
+                    <div class="space-y-3 pb-6 border-b">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="font-medium text-gray-900">₹{{ cart_subtotal }}</span>
+                        </div>
+                        
+                        {% if total_discount > 0 %}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Discount</span>
+                            <span class="font-medium text-green-600">-₹{{ total_discount }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Delivery Charges</span>
+                            <span class="font-medium text-gray-900" id="delivery-charges">FREE</span>
+                        </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="py-4">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span class="text-gray-900">Total Amount</span>
+                            <span class="text-gray-900" id="total-amount">₹{{ cart_total }}</span>
+                        </div>
+                        {% if total_savings > 0 %}
+                        <p class="text-sm text-green-600 mt-1">
+                            You saved ₹{{ total_savings }} on this order
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Continue Button -->
+                    <button onclick="proceedToPayment()"
+                            class="w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white py-3 px-4 rounded-lg font-medium hover:from-pink-600 hover:to-pink-700 transition duration-300 shadow-lg hover:shadow-xl">
+                        Continue to Payment
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+
+                    <!-- Security Info -->
+                    <div class="mt-6 text-center">
+                        <p class="text-xs text-gray-500">
+                            <i class="fas fa-lock mr-1"></i>
+                            Your information is secure and encrypted
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide address form
+    function showAddressForm() {
+        document.getElementById('new-address-form').classList.remove('hidden');
+    }
+
+    function hideAddressForm() {
+        document.getElementById('new-address-form').classList.add('hidden');
+    }
+
+    // Edit address
+    function editAddress(addressId) {
+        // Implement edit functionality
+        console.log('Edit address:', addressId);
+    }
+
+    // Update delivery charges based on option
+    document.querySelectorAll('input[name="delivery_option"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const deliveryCharges = document.getElementById('delivery-charges');
+            const totalAmount = document.getElementById('total-amount');
+            const baseTotal = {{ cart_total }};
+            
+            if (this.value === 'express') {
+                deliveryCharges.textContent = '₹99';
+                totalAmount.textContent = `₹${baseTotal + 99}`;
+            } else {
+                deliveryCharges.textContent = 'FREE';
+                totalAmount.textContent = `₹${baseTotal}`;
+            }
+        });
+    });
+
+    // Proceed to payment
+    function proceedToPayment() {
+        const selectedAddress = document.querySelector('input[name="delivery_address"]:checked');
+        const deliveryOption = document.querySelector('input[name="delivery_option"]:checked');
+        
+        if (!selectedAddress) {
+            alert('Please select a delivery address');
+            return;
+        }
+        
+        // Store selections and proceed to payment
+        const checkoutData = {
+            address_id: selectedAddress.value,
+            delivery_option: deliveryOption.value
+        };
+        
+        // Save to session and redirect to payment page
+        fetch('/api/checkout/save-address/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(checkoutData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{% url 'cart:payment' %}";
+            }
+        });
+    }
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bad Request - {{ site_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-lg mx-auto p-6">
+        <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="mb-6">
+                <svg class="w-16 h-16 mx-auto text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+                400
+            </h1>
+            
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                Bad Request
+            </h2>
+            
+            <p class="text-gray-600 mb-8">
+                Sorry, we couldn't process your request.<br>
+                The request was malformed or invalid.
+            </p>
+            
+            <div class="space-y-4">
+                <a href="javascript:history.back()" 
+                   class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Go Back
+                </a>
+                
+                <p class="text-sm text-gray-500">
+                    You can try:
+                </p>
+                
+                <div class="flex justify-center space-x-4">
+                    <a href="{% url 'core:home' %}" class="text-blue-600 hover:text-blue-800">Home Page</a>
+                    <a href="{% url 'core:contact' %}" class="text-blue-600 hover:text-blue-800">Contact Support</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Error Details: {{ error_message|default:"Invalid request parameters" }}</p>
+            {% if contact_email %}
+            <p class="mt-2">
+                If you believe this is a mistake, please contact us at:
+                <a href="mailto:{{ contact_email }}" class="text-blue-600 hover:text-blue-800">
+                    {{ contact_email }}
+                </a>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Report 400 errors to analytics
+        if (typeof gtag === 'function') {
+            gtag('event', '400_error', {
+                'event_category': 'error',
+                'event_label': window.location.pathname,
+                'error_message': '{{ error_message|default:"Invalid request parameters"|escapejs }}'
+            });
+        }
+
+        // Add error details to console for debugging
+        console.error('Bad Request:', {
+            path: window.location.pathname,
+            error: '{{ error_message|default:"Invalid request parameters"|escapejs }}'
+        });
+    </script>
+</body>
+</html>

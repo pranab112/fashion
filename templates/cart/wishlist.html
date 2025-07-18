@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Breadcrumbs -->
+        <nav class="text-sm mb-6">
+            <ol class="list-none p-0 inline-flex text-gray-600">
+                <li class="flex items-center">
+                    <a href="{% url 'core:home' %}" class="hover:text-pink-600 transition duration-200">Home</a>
+                    <i class="fas fa-chevron-right mx-3 text-xs"></i>
+                </li>
+                <li class="flex items-center">
+                    <a href="{% url 'users:profile' %}" class="hover:text-pink-600 transition duration-200">My Account</a>
+                    <i class="fas fa-chevron-right mx-3 text-xs"></i>
+                </li>
+                <li class="text-gray-900 font-medium">My Wishlist</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">My Wishlist</h1>
+                    <p class="text-gray-600 mt-1">
+                        {% if wishlist_items %}
+                        {{ wishlist_items|length }} item{{ wishlist_items|length|pluralize }} saved
+                        {% else %}
+                        Save your favorite items here
+                        {% endif %}
+                    </p>
+                </div>
+                {% if wishlist_items %}
+                <button onclick="shareWishlist()" 
+                        class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-200">
+                    <i class="fas fa-share-alt"></i>
+                    Share Wishlist
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if wishlist_items %}
+        <!-- Wishlist Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for item in wishlist_items %}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                <div class="relative">
+                    <!-- Product Image -->
+                    <a href="{{ item.product.get_absolute_url }}">
+                        <div class="aspect-w-3 aspect-h-4 bg-gray-100">
+                            {% if item.product.get_primary_image %}
+                            <img src="{{ item.product.get_primary_image.url }}" 
+                                 alt="{{ item.product.name }}"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            {% else %}
+                            <img src="{% static 'images/product-placeholder.jpg' %}" 
+                                 alt="{{ item.product.name }}"
+                                 class="w-full h-full object-cover">
+                            {% endif %}
+                        </div>
+                    </a>
+                    
+                    <!-- Remove Button -->
+                    <button onclick="removeFromWishlist('{{ item.id }}')"
+                            class="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 transition duration-200"
+                            title="Remove from wishlist">
+                        <i class="fas fa-times text-gray-600 hover:text-red-600"></i>
+                    </button>
+                    
+                    <!-- Sale Badge -->
+                    {% if item.product.is_on_sale %}
+                    <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                        -{{ item.product.discount_percentage }}%
+                    </span>
+                    {% endif %}
+                    
+                    <!-- Out of Stock Overlay -->
+                    {% if not item.product.is_in_stock %}
+                    <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <span class="text-white font-semibold">Out of Stock</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-4">
+                    <a href="{{ item.product.get_absolute_url }}" class="block">
+                        <h3 class="font-semibold text-gray-900 mb-1 truncate">{{ item.product.name }}</h3>
+                        <p class="text-sm text-gray-600 mb-2">{{ item.product.brand.name }}</p>
+                        
+                        <!-- Price -->
+                        <div class="mb-3">
+                            {% if item.product.sale_price %}
+                            <span class="text-lg font-bold text-gray-900">₹{{ item.product.sale_price }}</span>
+                            <span class="text-sm text-gray-500 line-through ml-2">₹{{ item.product.price }}</span>
+                            {% else %}
+                            <span class="text-lg font-bold text-gray-900">₹{{ item.product.price }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Rating -->
+                        {% if item.product.average_rating %}
+                        <div class="flex items-center text-sm">
+                            <div class="flex text-yellow-400">
+                                {% for i in "12345"|make_list %}
+                                <i class="fas fa-star {% if forloop.counter > item.product.average_rating %}text-gray-300{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="text-gray-600 ml-1">({{ item.product.review_count }})</span>
+                        </div>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Actions -->
+                    <div class="mt-4">
+                        {% if item.product.is_in_stock %}
+                        <button onclick="moveToCart('{{ item.id }}')"
+                                class="w-full bg-pink-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-pink-700 transition duration-200">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            Move to Cart
+                        </button>
+                        {% else %}
+                        <button onclick="notifyWhenAvailable('{{ item.product.id }}')"
+                                class="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition duration-200">
+                            <i class="fas fa-bell mr-2"></i>
+                            Notify When Available
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Recommendations -->
+        {% if recommendations %}
+        <div class="mt-12">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">You May Also Like</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                {% for product in recommendations %}
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition duration-200">
+                    <a href="{{ product.get_absolute_url }}">
+                        <div class="aspect-w-3 aspect-h-4 bg-gray-100">
+                            {% if product.get_primary_image %}
+                            <img src="{{ product.get_primary_image.url }}" 
+                                 alt="{{ product.name }}"
+                                 class="w-full h-full object-cover">
+                            {% else %}
+                            <img src="{% static 'images/product-placeholder.jpg' %}" 
+                                 alt="{{ product.name }}"
+                                 class="w-full h-full object-cover">
+                            {% endif %}
+                        </div>
+                        <div class="p-3">
+                            <h4 class="text-sm font-medium text-gray-900 truncate">{{ product.name }}</h4>
+                            <p class="text-xs text-gray-600">{{ product.brand.name }}</p>
+                            <p class="text-sm font-bold text-gray-900 mt-1">₹{{ product.display_price }}</p>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty Wishlist -->
+        <div class="max-w-md mx-auto text-center py-16">
+            <div class="bg-white rounded-xl shadow-sm p-12">
+                <div class="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="far fa-heart text-4xl text-pink-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
+                <p class="text-gray-600 mb-8">Save items you love to buy them later</p>
+                
+                <a href="{% url 'products:product_list' %}"
+                   class="inline-block bg-pink-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-pink-700 transition duration-300 shadow-md hover:shadow-lg">
+                    Start Shopping
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="share-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closeShareModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Share Your Wishlist</h3>
+            
+            <div class="space-y-4">
+                <!-- Share Link -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Share Link</label>
+                    <div class="flex gap-2">
+                        <input type="text" 
+                               id="share-link" 
+                               value="{{ request.build_absolute_uri }}"
+                               readonly
+                               class="flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm">
+                        <button onclick="copyShareLink()" 
+                                class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition duration-200">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Social Share -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Share on Social Media</label>
+                    <div class="flex gap-2">
+                        <button onclick="shareOn('facebook')" 
+                                class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button onclick="shareOn('twitter')" 
+                                class="flex-1 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition duration-200">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button onclick="shareOn('whatsapp')" 
+                                class="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                        <button onclick="shareOn('email')" 
+                                class="flex-1 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-200">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="closeShareModal()" 
+                    class="mt-6 w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Remove from wishlist
+    function removeFromWishlist(itemId) {
+        if (!confirm('Remove this item from your wishlist?')) return;
+        
+        fetch(`/api/wishlist/remove/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': nexusUtils.getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                nexusUtils.showToast('Failed to remove item', 'error');
+            }
+        })
+        .catch(error => {
+            nexusUtils.showToast('Network error', 'error');
+        });
+    }
+
+    // Move to cart
+    function moveToCart(itemId) {
+        fetch(`/api/wishlist/move-to-cart/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': nexusUtils.getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                nexusUtils.showToast('Item moved to cart', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                nexusUtils.showToast(data.error || 'Failed to move item', 'error');
+            }
+        })
+        .catch(error => {
+            nexusUtils.showToast('Network error', 'error');
+        });
+    }
+
+    // Notify when available
+    function notifyWhenAvailable(productId) {
+        fetch(`/api/products/${productId}/notify-availability/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': nexusUtils.getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                nexusUtils.showToast('You will be notified when this item is back in stock', 'success');
+            } else {
+                nexusUtils.showToast(data.error || 'Failed to set notification', 'error');
+            }
+        })
+        .catch(error => {
+            nexusUtils.showToast('Network error', 'error');
+        });
+    }
+
+    // Share wishlist
+    function shareWishlist() {
+        document.getElementById('share-modal').classList.remove('hidden');
+    }
+
+    function closeShareModal() {
+        document.getElementById('share-modal').classList.add('hidden');
+    }
+
+    function copyShareLink() {
+        const input = document.getElementById('share-link');
+        input.select();
+        document.execCommand('copy');
+        nexusUtils.showToast('Link copied to clipboard', 'success');
+    }
+
+    function shareOn(platform) {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent('Check out my wishlist on {{ site_name }}!');
+        let shareUrl;
+        
+        switch(platform) {
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
+                break;
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=${text}%20${url}`;
+                break;
+            case 'email':
+                shareUrl = `mailto:?subject=${text}&body=${url}`;
+                break;
+        }
+        
+        if (platform === 'email') {
+            window.location.href = shareUrl;
+        } else {
+            window.open(shareUrl, '_blank', 'width=600,height=400');
+        }
+    }
+</script>
+{% endblock %}

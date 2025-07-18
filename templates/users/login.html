@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - NEXUS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Sign in to your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Or
+                <a href="{% url 'users:register' %}" class="font-medium text-pink-600 hover:text-pink-500">
+                    create a new account
+                </a>
+            </p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="rounded-md {% if message.tags == 'error' %}bg-red-50{% else %}bg-green-50{% endif %} p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'error' %}
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    {% else %}
+                    <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-800{% else %}text-green-800{% endif %}">
+                        {{ message }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form class="mt-8 space-y-6" method="POST" action="{% url 'users:login' %}">
+            {% csrf_token %}
+            
+            <!-- Redirect URL -->
+            {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="email" class="sr-only">Email address</label>
+                    <input id="email" name="email" type="email" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Email address">
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
+                           placeholder="Password">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember_me" name="remember_me" type="checkbox"
+                           class="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded">
+                    <label for="remember_me" class="ml-2 block text-sm text-gray-900">
+                        Remember me
+                    </label>
+                </div>
+
+                <div class="text-sm">
+                    <a href="{% url 'users:password_reset' %}" class="font-medium text-pink-600 hover:text-pink-500">
+                        Forgot your password?
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-pink-500 group-hover:text-pink-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                    Sign in
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Focus first input on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('email').focus();
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            e.preventDefault();
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        if (!isValidEmail(email)) {
+            e.preventDefault();
+            showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+    });
+
+    function isValidEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        }`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

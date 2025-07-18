@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Blog - NEXUS{% endblock %}
+
+{% block meta_description %}Read the latest fashion trends, style tips, and industry news on the NEXUS blog.{% endblock %}
+
+{% block meta_keywords %}fashion blog, style tips, fashion trends, clothing advice, fashion industry news{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">NEXUS Blog</h1>
+
+    {% if blog_posts %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for post in blog_posts %}
+            <article class="bg-white rounded-lg shadow-md overflow-hidden">
+                {% if post.image %}
+                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-full h-48 object-cover">
+                {% endif %}
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ post.title }}</h2>
+                    <p class="text-gray-600 text-sm mb-4">{{ post.created_at|date:"F j, Y" }}</p>
+                    <p class="text-gray-700 mb-4">{{ post.excerpt }}</p>
+                    <a href="{{ post.get_absolute_url }}" class="text-pink-600 hover:text-pink-700 font-medium">
+                        Read More →
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Coming Soon!</h2>
+            <p class="text-gray-600">
+                We're working on bringing you exciting fashion content. Check back soon for the latest trends, style tips, and more!
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

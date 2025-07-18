@@ -1,0 +1,862 @@
+{% extends "base.html" %}
+{% load static %}
+{% load math_filters %}
+
+{% block title %}{{ site_name }} - Online Shopping for Fashion{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Hero Banner Slider - Modern Implementation */
+.hero-slider {
+    position: relative;
+    height: 600px;
+    width: 100%;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.slider-wrapper {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.slider-container {
+    display: flex;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide {
+    min-width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.slide-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+    z-index: 1;
+}
+
+.slide-content {
+    position: absolute;
+    left: 5%;
+    bottom: 20%;
+    z-index: 2;
+    color: white;
+    max-width: 600px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.slide-content h2 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    line-height: 1.1;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: slideInUp 0.8s ease-out 0.3s forwards;
+}
+
+.slide-content p {
+    font-size: 1.3rem;
+    margin-bottom: 25px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: slideInUp 0.8s ease-out 0.6s forwards;
+}
+
+.slide-content .btn {
+    display: inline-block;
+    padding: 12px 30px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: 2px solid #007bff;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: slideInUp 0.8s ease-out 0.9s forwards;
+}
+
+.slide-content .btn:hover {
+    background: transparent;
+    color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+}
+
+/* Navigation Buttons */
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.9);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 18px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 3;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.slider-btn:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.slider-btn-prev {
+    left: 20px;
+}
+
+.slider-btn-next {
+    right: 20px;
+}
+
+/* Dots Indicator */
+.slider-dots {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 3;
+}
+
+.slider-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.slider-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+.slider-dot:hover {
+    background: rgba(255,255,255,0.8);
+}
+
+/* Animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-slider {
+        height: 400px;
+    }
+    
+    .slide-content {
+        left: 20px;
+        right: 20px;
+        bottom: 15%;
+    }
+    
+    .slide-content h2 {
+        font-size: 2.2rem;
+    }
+    
+    .slide-content p {
+        font-size: 1.1rem;
+    }
+    
+    .slider-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .slider-btn-prev {
+        left: 15px;
+    }
+    
+    .slider-btn-next {
+        right: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-slider {
+        height: 350px;
+    }
+    
+    .slide-content h2 {
+        font-size: 1.8rem;
+    }
+    
+    .slide-content p {
+        font-size: 1rem;
+    }
+    
+    .slide-content .btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Banner Slider -->
+<section class="hero-slider">
+    <div class="slider-wrapper">
+        <div class="slider-container" id="heroSlider">
+            {% if hero_banners %}
+                {% for banner in hero_banners %}
+                <div class="slide" data-slide="{{ forloop.counter0 }}">
+                    {% if banner.image %}
+                        <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Hero Banner' }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                    {% else %}
+                        <img src="{% static 'images/hero-banner-' %}{{ forloop.counter }}.jpg" alt="{{ banner.title|default:'Hero Banner' }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                    {% endif %}
+                    
+                    {% if banner.title or banner.subtitle or banner.link_text %}
+                    <div class="slide-overlay"></div>
+                    <div class="slide-content">
+                        {% if banner.title %}
+                            <h2>{{ banner.title }}</h2>
+                        {% endif %}
+                        {% if banner.subtitle %}
+                            <p>{{ banner.subtitle }}</p>
+                        {% endif %}
+                        {% if banner.link_text and banner.link_url %}
+                            <a href="{{ banner.link_url }}" class="btn">{{ banner.link_text }}</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback slides when no banners are configured -->
+                <div class="slide" data-slide="0">
+                    <img src="{% static 'images/hero-banner-1.jpg' %}" alt="Welcome to Fashion Store" loading="eager">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-content">
+                        <h2>Welcome to Fashion Store</h2>
+                        <p>Discover the latest trends and exclusive collections</p>
+                        <a href="{% url 'products:product_list' %}" class="btn">Shop Now</a>
+                    </div>
+                </div>
+                <div class="slide" data-slide="1">
+                    <img src="{% static 'images/hero-banner-2.jpg' %}" alt="Premium Quality" loading="lazy">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-content">
+                        <h2>Premium Quality</h2>
+                        <p>Crafted with precision and designed for excellence</p>
+                        <a href="{% url 'products:product_list' %}" class="btn">Explore</a>
+                    </div>
+                </div>
+                <div class="slide" data-slide="2">
+                    <img src="{% static 'images/hero-banner-3.jpg' %}" alt="Exclusive Deals" loading="lazy">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-content">
+                        <h2>Exclusive Deals</h2>
+                        <p>Up to 70% off on selected items</p>
+                        <a href="{% url 'products:product_list' %}" class="btn">Shop Deals</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if hero_banners|length > 1 or not hero_banners %}
+        <!-- Navigation Buttons -->
+        <button class="slider-btn slider-btn-prev" onclick="heroSlider.previousSlide()" aria-label="Previous slide">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="slider-btn slider-btn-next" onclick="heroSlider.nextSlide()" aria-label="Next slide">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <!-- Dots Indicator -->
+        <div class="slider-dots" id="sliderDots">
+            {% if hero_banners %}
+                {% for banner in hero_banners %}
+                <button class="slider-dot{% if forloop.first %} active{% endif %}" onclick="heroSlider.goToSlide({{ forloop.counter0 }})" aria-label="Go to slide {{ forloop.counter }}"></button>
+                {% endfor %}
+            {% else %}
+                <button class="slider-dot active" onclick="heroSlider.goToSlide(0)" aria-label="Go to slide 1"></button>
+                <button class="slider-dot" onclick="heroSlider.goToSlide(1)" aria-label="Go to slide 2"></button>
+                <button class="slider-dot" onclick="heroSlider.goToSlide(2)" aria-label="Go to slide 3"></button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Deal of the Day -->
+{% if deal_products %}
+<section class="section-padding">
+    <div class="container">
+        <h2 class="section-title">Deal of the Day</h2>
+        <div class="deals-grid">
+            {% for product in deal_products %}
+            <div class="deal-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    {% if product.images.exists %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="deal-info">
+                        <h3>{{ product.brand.name }}</h3>
+                        <p>{{ product.name|truncatewords:10 }}</p>
+                        {% if product.discount_percentage %}
+                        <div class="deal-discount">UP TO {{ product.discount_percentage }}% OFF</div>
+                        {% endif %}
+                        <div class="price-info">
+                            <span class="current-price">₹{{ product.discounted_price|floatformat:0 }}</span>
+                            {% if product.discount_percentage %}
+                            <span class="original-price">₹{{ product.base_price|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Exclusive Brands -->
+{% if exclusive_brands %}
+<section class="section-padding bg-light">
+    <div class="container">
+        <h2 class="section-title">Exclusive Brands</h2>
+        <div class="brand-showcase">
+            {% for featured_brand in exclusive_brands %}
+            <div class="brand-showcase-card">
+                <a href="{% url 'products:brand_detail' featured_brand.brand.slug %}">
+                    {% if featured_brand.custom_image %}
+                    <img src="{{ featured_brand.custom_image.url }}" alt="{{ featured_brand.brand.name }}">
+                    {% elif featured_brand.brand.logo %}
+                    <img src="{{ featured_brand.brand.logo.url }}" alt="{{ featured_brand.brand.name }}">
+                    {% else %}
+                    <img src="{% static 'images/brand-placeholder.jpg' %}" alt="{{ featured_brand.brand.name }}">
+                    {% endif %}
+                    <div class="brand-showcase-info">
+                        <h3>{{ featured_brand.custom_title|default:featured_brand.brand.name }}</h3>
+                        {% if featured_brand.custom_subtitle %}
+                        <p>{{ featured_brand.custom_subtitle }}</p>
+                        {% endif %}
+                        {% if featured_brand.discount_text %}
+                        <span class="discount-badge">{{ featured_brand.discount_text }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Top Picks -->
+{% if top_picks %}
+<section class="section-padding">
+    <div class="container">
+        <h2 class="section-title">Top Picks</h2>
+        <div class="top-picks-grid">
+            {% for product in top_picks %}
+            <div class="top-pick-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    {% if product.images.exists %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="product-info">
+                        <h3>{{ product.brand.name }}</h3>
+                        <p>{{ product.name|truncatewords:10 }}</p>
+                        <div class="price-info">
+                            <span class="current-price">₹{{ product.discounted_price|floatformat:0 }}</span>
+                            {% if product.discount_percentage %}
+                            <span class="original-price">₹{{ product.base_price|floatformat:0 }}</span>
+                            <span class="discount-percent">({{ product.discount_percentage }}% OFF)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Shop by Category -->
+{% if featured_categories %}
+<section class="section-padding bg-light">
+    <div class="container">
+        <h2 class="section-title">Shop by Category</h2>
+        <div class="categories-grid">
+            {% for featured_cat in featured_categories %}
+            <a href="{% url 'products:category_detail' featured_cat.category.slug %}" class="category-card">
+                {% if featured_cat.custom_image %}
+                <img src="{{ featured_cat.custom_image.url }}" alt="{{ featured_cat.category.name }}">
+                {% elif featured_cat.category.image %}
+                <img src="{{ featured_cat.category.image.url }}" alt="{{ featured_cat.category.name }}">
+                {% else %}
+                <img src="{% static 'images/category-placeholder.jpg' %}" alt="{{ featured_cat.category.name }}">
+                {% endif %}
+                <div class="category-overlay">
+                    <span>{{ featured_cat.custom_title|default:featured_cat.category.name }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Brand Deals -->
+{% if brand_deals %}
+<section class="section-padding">
+    <div class="container">
+        <h2 class="section-title">Brand Deals</h2>
+        <div class="brands-grid">
+            {% for featured_brand in brand_deals %}
+            <a href="{% url 'products:brand_detail' featured_brand.brand.slug %}" class="brand-deal-card">
+                {% if featured_brand.custom_image %}
+                <img src="{{ featured_brand.custom_image.url }}" alt="{{ featured_brand.brand.name }}">
+                {% elif featured_brand.brand.logo %}
+                <img src="{{ featured_brand.brand.logo.url }}" alt="{{ featured_brand.brand.name }}">
+                {% else %}
+                <img src="{% static 'images/brand-placeholder.jpg' %}" alt="{{ featured_brand.brand.name }}">
+                {% endif %}
+                <div class="brand-deal-info">
+                    <h4>{{ featured_brand.custom_title|default:featured_brand.brand.name }}</h4>
+                    {% if featured_brand.discount_text %}
+                    <span>{{ featured_brand.discount_text }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Trending Now -->
+{% if trending_products %}
+<section class="section-padding bg-light">
+    <div class="container">
+        <h2 class="section-title">Trending Now</h2>
+        <div class="trending-grid">
+            {% for product in trending_products %}
+            <div class="trending-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    <div class="trending-image">
+                        {% if product.images.exists %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                        {% else %}
+                        <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                        {% endif %}
+                    </div>
+                    <div class="trending-info">
+                        <h3 class="brand-name">{{ product.brand.name }}</h3>
+                        <p class="product-desc">{{ product.name|truncatewords:10 }}</p>
+                        <div class="price-info">
+                            <span class="current-price">₹{{ product.discounted_price|floatformat:0 }}</span>
+                            {% if product.discount_percentage %}
+                            <span class="original-price">₹{{ product.base_price|floatformat:0 }}</span>
+                            <span class="discount-percent">({{ product.discount_percentage }}% OFF)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Indian Wear -->
+{% if indian_wear_products %}
+<section class="section-padding">
+    <div class="container">
+        <h2 class="section-title">Indian Wear</h2>
+        <div class="indian-wear-grid">
+            {% for product in indian_wear_products %}
+            <div class="indian-wear-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    {% if product.images.exists %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="product-info">
+                        <h3>{{ product.brand.name }}</h3>
+                        <p>{{ product.name|truncatewords:10 }}</p>
+                        <div class="price">₹{{ product.discounted_price|floatformat:0 }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Sports Wear -->
+{% if sports_wear_products %}
+<section class="section-padding bg-light">
+    <div class="container">
+        <h2 class="section-title">Sports Wear</h2>
+        <div class="sports-wear-grid">
+            {% for product in sports_wear_products %}
+            <div class="sports-wear-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    {% if product.images.exists %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="product-info">
+                        <h3>{{ product.brand.name }}</h3>
+                        <p>{{ product.name|truncatewords:10 }}</p>
+                        <div class="price">₹{{ product.discounted_price|floatformat:0 }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Footwear -->
+{% if footwear_products %}
+<section class="section-padding">
+    <div class="container">
+        <h2 class="section-title">Footwear</h2>
+        <div class="footwear-grid">
+            {% for product in footwear_products %}
+            <div class="footwear-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    {% if product.images.exists %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="product-info">
+                        <h3>{{ product.brand.name }}</h3>
+                        <p>{{ product.name|truncatewords:10 }}</p>
+                        <div class="price">₹{{ product.discounted_price|floatformat:0 }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- New Brands -->
+{% if new_brands %}
+<section class="section-padding bg-light">
+    <div class="container">
+        <h2 class="section-title">New Brands</h2>
+        <div class="new-brands-grid">
+            {% for featured_brand in new_brands %}
+            <div class="new-brand-card">
+                <a href="{% url 'products:brand_detail' featured_brand.brand.slug %}">
+                    {% if featured_brand.custom_image %}
+                    <img src="{{ featured_brand.custom_image.url }}" alt="{{ featured_brand.brand.name }}">
+                    {% elif featured_brand.brand.logo %}
+                    <img src="{{ featured_brand.brand.logo.url }}" alt="{{ featured_brand.brand.name }}">
+                    {% else %}
+                    <img src="{% static 'images/brand-placeholder.jpg' %}" alt="{{ featured_brand.brand.name }}">
+                    {% endif %}
+                    <div class="brand-info">
+                        <h3>{{ featured_brand.custom_title|default:featured_brand.brand.name }}</h3>
+                        {% if featured_brand.custom_subtitle %}
+                        <p>{{ featured_brand.custom_subtitle }}</p>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Modern Hero Slider Implementation
+class HeroSlider {
+    constructor(container) {
+        this.container = container;
+        this.slides = container.querySelectorAll('.slide');
+        this.dots = document.querySelectorAll('.slider-dot');
+        this.currentSlide = 0;
+        this.totalSlides = this.slides.length;
+        this.autoPlayInterval = null;
+        this.autoPlayDuration = {{ homepage_settings.hero_slide_duration|default:4 }}000; // Convert seconds to milliseconds
+        this.isAutoPlay = {% if homepage_settings.hero_auto_play %}true{% else %}false{% endif %};
+        this.isPlaying = false;
+        this.isTransitioning = false;
+        
+        this.init();
+    }
+    
+    init() {
+        if (this.totalSlides <= 1) return;
+        
+        // Set up touch/swipe support
+        this.setupTouchEvents();
+        
+        // Set up keyboard navigation
+        this.setupKeyboardEvents();
+        
+        // Start autoplay if enabled
+        if (this.isAutoPlay) {
+            this.startAutoPlay();
+        }
+        
+        // Pause on hover
+        this.container.addEventListener('mouseenter', () => this.stopAutoPlay());
+        this.container.addEventListener('mouseleave', () => {
+            if (this.isAutoPlay) this.startAutoPlay();
+        });
+        
+        // Initialize first slide
+        this.updateSlider(0, false);
+    }
+    
+    updateSlider(index, animate = true) {
+        if (this.isTransitioning) return;
+        
+        this.isTransitioning = true;
+        this.currentSlide = index;
+        
+        // Update slider position
+        const translateX = -index * 100;
+        this.container.style.transform = `translateX(${translateX}%)`;
+        
+        // Update dots
+        this.dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+        
+        // Reset slide content animations
+        this.slides.forEach((slide, i) => {
+            const content = slide.querySelector('.slide-content');
+            if (content) {
+                if (i === index) {
+                    // Trigger animations for current slide
+                    const elements = content.querySelectorAll('h2, p, .btn');
+                    elements.forEach((el, j) => {
+                        el.style.animation = 'none';
+                        el.offsetHeight; // Trigger reflow
+                        el.style.animation = `slideInUp 0.8s ease-out ${0.3 + (j * 0.3)}s forwards`;
+                    });
+                } else {
+                    // Reset animations for other slides
+                    const elements = content.querySelectorAll('h2, p, .btn');
+                    elements.forEach(el => {
+                        el.style.animation = 'none';
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateY(30px)';
+                    });
+                }
+            }
+        });
+        
+        // Allow transitions again after animation completes
+        setTimeout(() => {
+            this.isTransitioning = false;
+        }, 600);
+    }
+    
+    nextSlide() {
+        const nextIndex = (this.currentSlide + 1) % this.totalSlides;
+        this.updateSlider(nextIndex);
+        this.resetAutoPlay();
+    }
+    
+    previousSlide() {
+        const prevIndex = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+        this.updateSlider(prevIndex);
+        this.resetAutoPlay();
+    }
+    
+    goToSlide(index) {
+        if (index !== this.currentSlide) {
+            this.updateSlider(index);
+            this.resetAutoPlay();
+        }
+    }
+    
+    startAutoPlay() {
+        if (this.totalSlides <= 1 || !this.isAutoPlay) return;
+        
+        this.stopAutoPlay();
+        this.autoPlayInterval = setInterval(() => {
+            this.nextSlide();
+        }, this.autoPlayDuration);
+        this.isPlaying = true;
+    }
+    
+    stopAutoPlay() {
+        if (this.autoPlayInterval) {
+            clearInterval(this.autoPlayInterval);
+            this.autoPlayInterval = null;
+        }
+        this.isPlaying = false;
+    }
+    
+    resetAutoPlay() {
+        if (this.isAutoPlay) {
+            this.stopAutoPlay();
+            setTimeout(() => this.startAutoPlay(), 3000);
+        }
+    }
+    
+    setupTouchEvents() {
+        let startX = 0;
+        let endX = 0;
+        let startY = 0;
+        let endY = 0;
+        
+        this.container.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        this.container.addEventListener('touchmove', (e) => {
+            // Prevent default only if it's a horizontal swipe
+            const deltaX = Math.abs(e.touches[0].clientX - startX);
+            const deltaY = Math.abs(e.touches[0].clientY - startY);
+            
+            if (deltaX > deltaY) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        this.container.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+            this.handleSwipe(startX, endX, startY, endY);
+        }, { passive: true });
+    }
+    
+    handleSwipe(startX, endX, startY, endY) {
+        const swipeThreshold = 50;
+        const deltaX = startX - endX;
+        const deltaY = Math.abs(startY - endY);
+        
+        // Only handle horizontal swipes
+        if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > deltaY) {
+            if (deltaX > 0) {
+                this.nextSlide();
+            } else {
+                this.previousSlide();
+            }
+        }
+    }
+    
+    setupKeyboardEvents() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                this.previousSlide();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                this.nextSlide();
+            }
+        });
+    }
+}
+
+// Initialize slider when DOM is ready
+let heroSlider;
+document.addEventListener('DOMContentLoaded', function() {
+    const sliderContainer = document.getElementById('heroSlider');
+    if (sliderContainer) {
+        heroSlider = new HeroSlider(sliderContainer);
+    }
+    
+    // Lazy loading for images
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// Add loading animation
+window.addEventListener('load', function() {
+    document.body.classList.add('loaded');
+});
+</script>
+{% endblock %}

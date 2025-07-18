@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ site_description }}{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/myntra-style.css">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- PWA -->
+    <link rel="manifest" href="{% url 'core:manifest' %}">
+    <meta name="theme-color" content="#ff3f6c">
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}{{ site_name }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_description }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}/static/images/og-image.jpg{% endblock %}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <!-- Brand -->
+            <a class="navbar-brand" href="{% url 'core:home' %}">
+                <span class="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-lg">
+                    {{ site_name }}
+                </span>
+            </a>
+            
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-button" aria-label="Toggle navigation">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            
+            <!-- Main Navigation -->
+            <nav class="navbar-nav">
+                <!-- Categories -->
+                <div class="nav-item dropdown">
+                    <button class="nav-link" onclick="this.nextElementSibling.classList.toggle('show')">
+                        Categories 
+                        <i class="fas fa-chevron-down ml-1"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        {% for category in main_categories %}
+                        <a class="dropdown-item" href="{{ category.get_absolute_url }}">
+                            {{ category.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <a class="nav-link" href="{% url 'products:featured' %}">Featured</a>
+                <a class="nav-link" href="{% url 'products:new_arrivals' %}">New Arrivals</a>
+                <a class="nav-link" href="{% url 'core:blog' %}">Blog</a>
+                <a class="nav-link" href="{% url 'core:about' %}">About</a>
+                <a class="nav-link" href="{% url 'core:contact' %}">Contact</a>
+            </nav>
+            
+            <!-- Search and User Actions -->
+            <div class="navbar-actions">
+                <!-- Search Form -->
+                <form class="search-form" action="{% url 'products:search' %}" method="get">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q" placeholder="Search products...">
+                        <button class="btn btn-icon" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- User Actions -->
+                {% if user.is_authenticated %}
+                <a class="btn btn-icon" href="{% url 'cart:detail' %}" title="Cart">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    {% if cart.total_items %}
+                    <span class="badge">{{ cart.total_items }}</span>
+                    {% endif %}
+                </a>
+                
+                <div class="dropdown">
+                    <button class="btn btn-icon" onclick="this.nextElementSibling.classList.toggle('show')" title="Account">
+                        <i class="fas fa-user text-xl"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <div class="dropdown-header">
+                            {{ user.get_short_name|default:user.username }}
+                        </div>
+                        <a class="dropdown-item" href="{% url 'users:profile' %}">
+                            <i class="fas fa-user-circle mr-2"></i>
+                            Profile
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form method="post" action="{% url 'users:logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item" style="border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
+                                <i class="fas fa-sign-out-alt mr-2"></i>
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <a class="btn btn-outline-primary" href="{% url 'users:login' %}">Login</a>
+                <a class="btn btn-primary" href="{% url 'users:register' %}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} fade-in">
+            {{ message }}
+            <button class="btn-close" onclick="this.parentElement.remove()"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <!-- About -->
+                <div class="footer-section">
+                    <h5 class="footer-title">About {{ site_name }}</h5>
+                    <p>{{ site_description }}</p>
+                    <div class="social-links">
+                        {% if facebook_url %}
+                        <a href="{{ facebook_url }}" target="_blank" title="Facebook" class="text-gray-400 hover:text-pink-600">
+                            <i class="fab fa-facebook-f fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if twitter_url %}
+                        <a href="{{ twitter_url }}" target="_blank" title="Twitter" class="text-gray-400 hover:text-pink-600">
+                            <i class="fab fa-twitter fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if instagram_url %}
+                        <a href="{{ instagram_url }}" target="_blank" title="Instagram" class="text-gray-400 hover:text-pink-600">
+                            <i class="fab fa-instagram fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if pinterest_url %}
+                        <a href="{{ pinterest_url }}" target="_blank" title="Pinterest" class="text-gray-400 hover:text-pink-600">
+                            <i class="fab fa-pinterest-p fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if youtube_url %}
+                        <a href="{{ youtube_url }}" target="_blank" title="YouTube" class="text-gray-400 hover:text-pink-600">
+                            <i class="fab fa-youtube fa-lg"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quick Links -->
+                <div class="footer-section">
+                    <h5 class="footer-title">Quick Links</h5>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'core:about' %}">About Us</a></li>
+                        <li><a href="{% url 'core:contact' %}">Contact Us</a></li>
+                        <li><a href="{% url 'core:blog' %}">Blog</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Newsletter -->
+                <div class="footer-section">
+                    <h5 class="footer-title">Newsletter</h5>
+                    <p>Subscribe to our newsletter for updates and exclusive offers!</p>
+                    <form action="{% url 'core:newsletter_subscribe' %}" method="post" class="newsletter-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="email" name="email" class="form-control" placeholder="Enter your email">
+                            <button class="btn btn-primary" type="submit">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="footer-bottom">
+                <p>&copy; {% now "Y" %} {{ site_name }}. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdowns = document.querySelectorAll('.dropdown-menu.show');
+            dropdowns.forEach(dropdown => {
+                const button = dropdown.previousElementSibling;
+                if (!button.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        });
+
+        // Handle mobile menu toggle
+        const mobileMenuButton = document.querySelector('.mobile-menu-button');
+        const navbarNav = document.querySelector('.navbar-nav');
+        if (mobileMenuButton && navbarNav) {
+            mobileMenuButton.addEventListener('click', () => {
+                navbarNav.classList.toggle('show');
+            });
+        }
+    </script>
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('{% url "core:service_worker" %}')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+    </script>
+</body>
+</html>
