@@ -152,3 +152,29 @@ class NewsletterUnsubscribeView(FormView):
                 _('This email address is not subscribed to our newsletter.')
             )
         return super().form_valid(form)
+
+class DebugImagesView(TemplateView):
+    """Debug page for image loading issues."""
+    template_name = 'core/debug_images.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get some products for testing
+        from products.models import Product, FeaturedProduct
+        from django.utils import timezone
+        from django.db import models
+        
+        # Get deal products (same as homepage)
+        now = timezone.now()
+        featured_products = FeaturedProduct.objects.filter(
+            section='deal_of_day',
+            is_active=True
+        ).filter(
+            models.Q(featured_until__isnull=True) | models.Q(featured_until__gt=now)
+        ).select_related('product', 'product__brand').order_by('order')[:8]
+        
+        context['deal_products'] = [fp.product for fp in featured_products]
+        context['debug'] = True  # Since we're in debug mode
+        
+        return context

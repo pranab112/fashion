@@ -1,0 +1,43 @@
+User-agent: *
+Allow: /
+Allow: /products/
+Allow: /about/
+Allow: /contact/
+Allow: /blog/
+Allow: /sitemap.xml
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /cart/
+Disallow: /users/
+Disallow: /checkout/
+Disallow: /maintenance/
+Disallow: /offline/
+
+# Crawl-delay: 10
+
+# Sitemaps
+Sitemap: https://nexus.com/sitemap.xml
+
+# Block specific bots
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Allow product images for Google Image Search
+User-agent: Googlebot-Image
+Allow: /media/products/
+Disallow: /media/users/
+Disallow: /static/admin/
+
+# Block certain file types
+Disallow: /*.pdf$
+Disallow: /*.doc$
+Disallow: /*.docx$
+Disallow: /*.xls$
+Disallow: /*.xlsx$

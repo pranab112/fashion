@@ -1,11 +1,21 @@
 from django.conf import settings
 from .models import SiteSettings
+from products.models import Category
 
 def site_settings(request):
     """Add site settings to template context."""
+    # Get main categories for navbar
+    main_categories = Category.objects.filter(
+        is_active=True,
+        parent=None
+    ).order_by('name')
+    
+    # Get mega menu categories
+    mega_menu_categories = Category.get_mega_menu_categories()
+    
     try:
         site_settings = SiteSettings.get_settings()
-        return {
+        context = {
             'site_name': site_settings.site_name,
             'site_description': site_settings.site_description,
             'contact_email': site_settings.contact_email,
@@ -24,7 +34,7 @@ def site_settings(request):
         }
     except:
         # Return default values if settings don't exist
-        return {
+        context = {
             'site_name': settings.SITE_NAME,
             'site_description': settings.SITE_DESCRIPTION,
             'contact_email': settings.DEFAULT_FROM_EMAIL,
@@ -41,3 +51,8 @@ def site_settings(request):
             'meta_keywords': '',
             'meta_description': '',
         }
+    
+    # Add categories to context
+    context['main_categories'] = main_categories
+    context['mega_menu_categories'] = mega_menu_categories
+    return context

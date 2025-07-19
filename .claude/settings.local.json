@@ -4,7 +4,11 @@
       "Bash(python manage.py:*)",
       "Bash(python:*)",
       "Bash(del debug_homepage.py debug_template.py)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

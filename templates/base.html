@@ -21,7 +21,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/myntra-style.css">
+    <link rel="stylesheet" href="/static/css/myntra-style.css?v={% now 'U' %}">
     {% block extra_css %}{% endblock %}
     
     <!-- PWA -->
@@ -53,26 +53,53 @@
             
             <!-- Main Navigation -->
             <nav class="navbar-nav">
-                <!-- Categories -->
-                <div class="nav-item dropdown">
-                    <button class="nav-link" onclick="this.nextElementSibling.classList.toggle('show')">
-                        Categories 
-                        <i class="fas fa-chevron-down ml-1"></i>
-                    </button>
-                    <div class="dropdown-menu">
-                        {% for category in main_categories %}
-                        <a class="dropdown-item" href="{{ category.get_absolute_url }}">
-                            {{ category.name }}
-                        </a>
-                        {% endfor %}
+                <!-- Dynamic Mega Dropdown Categories -->
+                {% for category in mega_menu_categories %}
+                <div class="nav-item mega-dropdown">
+                    <a class="nav-link" href="{{ category.get_absolute_url }}" data-category="{{ category.slug }}">
+                        {% if category.mega_menu_icon %}
+                            <i class="fas {{ category.mega_menu_icon }} mr-1"></i>
+                        {% endif %}
+                        {{ category.name|upper }}
+                    </a>
+                    {% if category.get_mega_menu_children %}
+                    <div class="mega-dropdown-menu" data-menu="{{ category.slug }}">
+                        <div class="mega-dropdown-container">
+                            <div class="mega-dropdown-content">
+                                {% for child_category in category.get_mega_menu_children %}
+                                <div class="mega-column">
+                                    <h3 class="mega-column-title">
+                                        {% if child_category.mega_menu_icon %}
+                                            <i class="fas {{ child_category.mega_menu_icon }} mr-1"></i>
+                                        {% endif %}
+                                        {{ child_category.mega_menu_title }}
+                                    </h3>
+                                    <ul class="mega-column-list">
+                                        {% for subcategory in child_category.get_mega_menu_children %}
+                                        <li>
+                                            <a href="{{ subcategory.get_absolute_url }}" class="mega-link">
+                                                {{ subcategory.name }}
+                                            </a>
+                                        </li>
+                                        {% empty %}
+                                        <li>
+                                            <a href="{{ child_category.get_absolute_url }}" class="mega-link">
+                                                View All {{ child_category.name }}
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
+                {% endfor %}
                 
-                <a class="nav-link" href="{% url 'products:featured' %}">Featured</a>
+                <a class="nav-link" href="{% url 'products:sale' %}">Sale</a>
                 <a class="nav-link" href="{% url 'products:new_arrivals' %}">New Arrivals</a>
-                <a class="nav-link" href="{% url 'core:blog' %}">Blog</a>
-                <a class="nav-link" href="{% url 'core:about' %}">About</a>
-                <a class="nav-link" href="{% url 'core:contact' %}">Contact</a>
             </nav>
             
             <!-- Search and User Actions -->
@@ -215,27 +242,190 @@
     
     <!-- JavaScript -->
     <script>
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            const dropdowns = document.querySelectorAll('.dropdown-menu.show');
-            dropdowns.forEach(dropdown => {
-                const button = dropdown.previousElementSibling;
-                if (!button.contains(e.target)) {
-                    dropdown.classList.remove('show');
+        // Mega Dropdown functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const megaDropdowns = document.querySelectorAll('.mega-dropdown');
+            let activeDropdown = null;
+            let hideTimeout = null;
+
+            megaDropdowns.forEach(dropdown => {
+                const link = dropdown.querySelector('.nav-link');
+                const menu = dropdown.querySelector('.mega-dropdown-menu');
+
+                // Show dropdown on hover
+                dropdown.addEventListener('mouseenter', function() {
+                    clearTimeout(hideTimeout);
+                    
+                    // Hide any other active dropdown
+                    if (activeDropdown && activeDropdown !== dropdown) {
+                        const activeMenu = activeDropdown.querySelector('.mega-dropdown-menu');
+                        if (activeMenu) {
+                            activeMenu.style.opacity = '0';
+                            activeMenu.style.visibility = 'hidden';
+                            activeMenu.style.transform = 'translateY(-10px)';
+                        }
+                    }
+                    
+                    // Show current dropdown
+                    if (menu) {
+                        menu.style.opacity = '1';
+                        menu.style.visibility = 'visible';
+                        menu.style.transform = 'translateY(0)';
+                        activeDropdown = dropdown;
+                    }
+                });
+
+                // Hide dropdown on leave with delay
+                dropdown.addEventListener('mouseleave', function() {
+                    hideTimeout = setTimeout(() => {
+                        if (menu) {
+                            menu.style.opacity = '0';
+                            menu.style.visibility = 'hidden';
+                            menu.style.transform = 'translateY(-10px)';
+                        }
+                        if (activeDropdown === dropdown) {
+                            activeDropdown = null;
+                        }
+                    }, 150);
+                });
+
+                // Keep dropdown open when hovering over menu
+                if (menu) {
+                    menu.addEventListener('mouseenter', function() {
+                        clearTimeout(hideTimeout);
+                    });
+
+                    menu.addEventListener('mouseleave', function() {
+                        hideTimeout = setTimeout(() => {
+                            menu.style.opacity = '0';
+                            menu.style.visibility = 'hidden';
+                            menu.style.transform = 'translateY(-10px)';
+                            if (activeDropdown === dropdown) {
+                                activeDropdown = null;
+                            }
+                        }, 150);
+                    });
+                }
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.mega-dropdown')) {
+                    megaDropdowns.forEach(dropdown => {
+                        const menu = dropdown.querySelector('.mega-dropdown-menu');
+                        if (menu) {
+                            menu.style.opacity = '0';
+                            menu.style.visibility = 'hidden';
+                            menu.style.transform = 'translateY(-10px)';
+                        }
+                    });
+                    activeDropdown = null;
+                }
+            });
+
+            // Handle escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && activeDropdown) {
+                    const menu = activeDropdown.querySelector('.mega-dropdown-menu');
+                    if (menu) {
+                        menu.style.opacity = '0';
+                        menu.style.visibility = 'hidden';
+                        menu.style.transform = 'translateY(-10px)';
+                    }
+                    activeDropdown = null;
                 }
             });
         });
 
-        // Handle mobile menu toggle
-        const mobileMenuButton = document.querySelector('.mobile-menu-button');
-        const navbarNav = document.querySelector('.navbar-nav');
-        if (mobileMenuButton && navbarNav) {
-            mobileMenuButton.addEventListener('click', () => {
-                navbarNav.classList.toggle('show');
-            });
-        }
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.querySelector('.mobile-menu-button');
+            const navbarNav = document.querySelector('.navbar-nav');
+            
+            if (mobileMenuButton && navbarNav) {
+                mobileMenuButton.addEventListener('click', function() {
+                    navbarNav.classList.toggle('show');
+                    
+                    // Toggle hamburger icon
+                    const icon = this.querySelector('i');
+                    if (navbarNav.classList.contains('show')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.navbar') && navbarNav.classList.contains('show')) {
+                        navbarNav.classList.remove('show');
+                        const icon = mobileMenuButton.querySelector('i');
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+            }
+        });
+
+        // Mobile mega dropdown functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 768) {
+                const megaDropdowns = document.querySelectorAll('.mega-dropdown');
+                
+                megaDropdowns.forEach(dropdown => {
+                    const link = dropdown.querySelector('.nav-link');
+                    const menu = dropdown.querySelector('.mega-dropdown-menu');
+                    
+                    if (link && menu) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            
+                            // Close other dropdowns
+                            megaDropdowns.forEach(otherDropdown => {
+                                if (otherDropdown !== dropdown) {
+                                    const otherMenu = otherDropdown.querySelector('.mega-dropdown-menu');
+                                    if (otherMenu) {
+                                        otherMenu.style.opacity = '0';
+                                        otherMenu.style.visibility = 'hidden';
+                                        otherMenu.style.transform = 'translateY(-10px)';
+                                    }
+                                }
+                            });
+                            
+                            // Toggle current dropdown
+                            const isVisible = menu.style.visibility === 'visible';
+                            if (isVisible) {
+                                menu.style.opacity = '0';
+                                menu.style.visibility = 'hidden';
+                                menu.style.transform = 'translateY(-10px)';
+                            } else {
+                                menu.style.opacity = '1';
+                                menu.style.visibility = 'visible';
+                                menu.style.transform = 'translateY(0)';
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        
+        // Close dropdowns when clicking anywhere else
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-item.dropdown')) {
+                hideAllDropdowns();
+            }
+        });
+        
+        // Also close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideAllDropdowns();
+            }
+        });
     </script>
-    <script src="/static/js/main.js"></script>
+    <script src="/static/js/main.js?v={% now 'U' %}"></script>
     {% block extra_js %}{% endblock %}
     
     <!-- Service Worker -->

@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models import CustomUser, Address
 
+
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     """Admin interface for CustomUser model."""
@@ -25,7 +26,7 @@ class CustomUserAdmin(UserAdmin):
                 'bio'
             )
         }),
-        (_('Vendor Settings'), {
+        (_('User Type'), {
             'fields': (
                 'user_type',
                 'is_vendor_approved',
@@ -50,13 +51,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('username', 'email', 'password1', 'password2', 'user_type'),
         }),
     )
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        # Vendors can only see their own profile
-        if hasattr(request.user, 'is_vendor') and request.user.is_vendor:
-            return qs.filter(id=request.user.id)
-        return qs
+
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):

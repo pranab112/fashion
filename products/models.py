@@ -27,6 +27,31 @@ class Category(MPTTModel):
         verbose_name=_('Parent category')
     )
     is_active = models.BooleanField(_('Active'), default=True)
+    
+    # Mega menu fields
+    show_in_mega_menu = models.BooleanField(
+        _('Show in Mega Menu'),
+        default=False,
+        help_text=_('Display this category in the mega dropdown menu')
+    )
+    mega_menu_order = models.PositiveIntegerField(
+        _('Mega Menu Order'),
+        default=0,
+        help_text=_('Order in mega menu (lower numbers appear first)')
+    )
+    mega_menu_column_title = models.CharField(
+        _('Mega Menu Column Title'),
+        max_length=100,
+        blank=True,
+        help_text=_('Custom title for mega menu column (leave blank to use category name)')
+    )
+    mega_menu_icon = models.CharField(
+        _('Mega Menu Icon'),
+        max_length=50,
+        blank=True,
+        help_text=_('FontAwesome icon class (e.g., fa-tshirt)')
+    )
+    
     created_at = models.DateTimeField(_('Created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('Updated at'), auto_now=True)
     
@@ -53,6 +78,27 @@ class Category(MPTTModel):
     
     def get_absolute_url(self):
         return reverse('products:category_detail', kwargs={'slug': self.slug})
+    
+    @property
+    def mega_menu_title(self):
+        """Get the title to display in mega menu."""
+        return self.mega_menu_column_title or self.name
+    
+    def get_mega_menu_children(self):
+        """Get children categories for mega menu display."""
+        return self.children.filter(
+            is_active=True,
+            show_in_mega_menu=True
+        ).order_by('mega_menu_order', 'name')
+    
+    @classmethod
+    def get_mega_menu_categories(cls):
+        """Get all main categories for mega menu."""
+        return cls.objects.filter(
+            is_active=True,
+            show_in_mega_menu=True,
+            parent=None
+        ).order_by('mega_menu_order', 'name')
 
 class Brand(models.Model):
     """Product brand model."""
@@ -275,6 +321,22 @@ class Product(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         default=0
     )
+    # Simple stock field for products without variants
+    simple_stock = models.PositiveIntegerField(
+        _('Stock (for products without variants)'),
+        default=0,
+        help_text=_('Use this for simple products. For products with sizes/colors, use variants instead.')
+    )
+    manage_stock = models.BooleanField(
+        _('Manage stock'),
+        default=True,
+        help_text=_('Track inventory for this product')
+    )
+    low_stock_threshold = models.PositiveIntegerField(
+        _('Low stock alert threshold'),
+        default=10,
+        help_text=_('Alert when stock falls below this number')
+    )
     is_active = models.BooleanField(_('Active'), default=True)
     is_featured = models.BooleanField(_('Featured'), default=False)
     is_new_arrival = models.BooleanField(_('New Arrival'), default=False)
@@ -317,6 +379,79 @@ class Product(models.Model):
     def is_on_sale(self):
         """Check if product is on sale."""
         return self.discount_percentage > 0
+    
+    def get_primary_image(self):
+        """Get the primary image for the product."""
+        primary_image = self.images.filter(is_primary=True).first()
+        if primary_image:
+            return primary_image
+        # Return first image if no primary image set
+        return self.images.first()
+    
+    @property
+    def price(self):
+        """Get the current price (for template compatibility)."""
+        return self.discounted_price
+    
+    @property
+    def sale_price(self):
+        """Get the sale price if product is on sale."""
+        if self.is_on_sale:
+            return self.discounted_price
+        return None
+    
+    @property
+    def average_rating(self):
+        """Get average rating for the product."""
+        # TODO: Implement when reviews are added
+        return 4.5
+    
+    @property
+    def available_sizes(self):
+        """Get available sizes for the product."""
+        return self.variants.filter(stock__gt=0).values_list('size', flat=True).distinct()
+    
+    @property
+    def available_colors(self):
+        """Get available colors for the product."""
+        return self.variants.filter(stock__gt=0).values_list('color', flat=True).distinct()
+    
+    def get_color_choices(self):
+        """Get color choices with hex values."""
+        colors = self.available_colors
+        # TODO: Implement proper color mapping
+        color_map = {
+            'red': '#FF0000',
+            'blue': '#0000FF',
+            'green': '#00FF00',
+            'black': '#000000',
+            'white': '#FFFFFF',
+        }
+        return [(color, color_map.get(color.lower(), '#CCCCCC')) for color in colors if color]
+    
+    @property
+    def has_variants(self):
+        """Check if product has size/color variants."""
+        return self.variants.exists()
+    
+    @property
+    def is_in_stock(self):
+        """Check if product is in stock."""
+        if self.has_variants:
+            return self.variants.filter(stock__gt=0).exists()
+        return self.simple_stock > 0
+    
+    @property
+    def stock(self):
+        """Get total stock count."""
+        if self.has_variants:
+            return self.variants.aggregate(total=models.Sum('stock'))['total'] or 0
+        return self.simple_stock
+    
+    @property
+    def is_low_stock(self):
+        """Check if product has low stock."""
+        return 0 < self.stock <= self.low_stock_threshold
 
 class ProductImage(models.Model):
     """Product image model."""
@@ -348,6 +483,17 @@ class ProductImage(models.Model):
                 is_primary=True
             ).update(is_primary=False)
         super().save(*args, **kwargs)
+    
+    def get_thumbnail_url(self):
+        """Get thumbnail URL for the image."""
+        # For now, return the original image URL
+        # TODO: Implement proper thumbnail generation
+        return self.image.url if self.image else None
+    
+    @property
+    def url(self):
+        """Get the image URL."""
+        return self.image.url if self.image else None
 
 class ProductVariant(models.Model):
     """Product variant model."""

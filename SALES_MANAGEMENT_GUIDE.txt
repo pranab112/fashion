@@ -1,0 +1,653 @@
+===============================================================================
+                        SALES MANAGEMENT SYSTEM - COMPLETE GUIDE
+===============================================================================
+
+TABLE OF CONTENTS:
+==================
+1. OVERVIEW
+2. SYSTEM ARCHITECTURE
+3. USER ROLES & PERMISSIONS
+4. MODELS & DATABASE STRUCTURE
+5. ADMIN INTERFACE GUIDE
+6. VENDOR WORKFLOW
+7. ORDER LIFECYCLE
+8. COMMISSION & PAYOUT SYSTEM
+9. REPORTING & ANALYTICS
+10. TROUBLESHOOTING
+11. API ENDPOINTS (Future)
+12. CUSTOMIZATION GUIDE
+
+===============================================================================
+1. OVERVIEW
+===============================================================================
+
+The Sales Management System is a comprehensive multi-vendor e-commerce solution
+that handles orders, payments, commissions, and vendor payouts. It supports
+both single-vendor and multi-vendor scenarios with complete data isolation
+between vendors.
+
+KEY FEATURES:
+- Multi-vendor order management
+- Automatic commission calculations
+- Vendor payout management
+- Real-time sales reporting
+- Order status tracking with audit trails
+- Payment gateway integration
+- Vendor data isolation
+- Commission approval workflow
+
+SUPPORTED SCENARIOS:
+- Single vendor per order
+- Multiple vendors per order (mixed cart)
+- Different commission rates per vendor/brand
+- Various payment methods (UPI, Cards, COD, etc.)
+- Multiple shipping addresses
+- Return and refund management
+
+===============================================================================
+2. SYSTEM ARCHITECTURE
+===============================================================================
+
+DATABASE MODELS:
+├── Order                 # Main order container
+├── OrderItem            # Individual products in order
+├── Payment              # Payment transactions
+├── Commission           # Vendor earnings tracking
+├── Payout               # Vendor payment management
+├── SalesReport          # Pre-calculated analytics
+├── OrderStatus          # Order status definitions
+└── OrderStatusHistory   # Audit trail for status changes
+
+RELATED MODELS:
+├── Product              # From products app
+├── ProductVariant       # Product size/color variants
+├── Brand                # Vendor brands
+├── CustomUser           # Customers and vendors
+└── Category             # Product categories
+
+DATA FLOW:
+Customer places order → OrderItems created → Commissions calculated →
+Payment processed → Order fulfilled → Commission approved → Payout processed
+
+===============================================================================
+3. USER ROLES & PERMISSIONS
+===============================================================================
+
+ADMIN USERS:
+------------
+Full access to all data and operations including:
+✓ View/edit all orders from all vendors
+✓ Manage payments and refunds
+✓ Approve/reject vendor commissions
+✓ Process vendor payouts
+✓ Access platform-wide analytics
+✓ Manage user accounts and permissions
+✓ Configure system settings
+
+VENDOR USERS:
+-------------
+Restricted access to only their own data:
+✓ View orders containing their products
+✓ Manage their own products and variants
+✓ View their commission earnings
+✓ Update order item status (shipped, etc.)
+✓ Manage payout information and bank details
+✓ View their sales reports and analytics
+✓ View customer information for their orders
+
+✗ Cannot view other vendors' data
+✗ Cannot approve their own commissions
+✗ Cannot process their own payouts
+✗ Cannot access platform-wide settings
+✗ Cannot delete orders or payments
+
+CUSTOMER USERS:
+---------------
+Frontend access only (not admin):
+✓ Place orders
+✓ View order history
+✓ Track order status
+✓ Manage profile and addresses
+
+===============================================================================
+4. MODELS & DATABASE STRUCTURE
+===============================================================================
+
+ORDER MODEL:
+------------
+- order_number: Unique identifier (ORD123456)
+- order_id: UUID for external systems
+- customer: Link to customer user
+- shipping/billing addresses: Complete address information
+- subtotal, tax_amount, shipping_cost, discount_amount, total_amount
+- status: pending, confirmed, processing, shipped, delivered, cancelled, returned, refunded
+- payment_status: pending, processing, completed, failed, cancelled, refunded
+- payment_method, payment_gateway: Integration details
+- tracking_number: Shipping tracker
+- timestamps: created_at, updated_at, shipped_at, delivered_at
+- is_multi_vendor: Flag for orders with multiple vendors
+
+ORDERITEM MODEL:
+----------------
+- order: Foreign key to Order
+- product: Link to Product
+- product_variant: Link to ProductVariant (optional)
+- product_name, product_sku, brand_name, size, color: Historical data
+- unit_price, quantity, total_price: Pricing information
+- vendor: Link to vendor user
+- vendor_commission_rate, vendor_commission: Commission calculation
+- status: Individual item status for multi-vendor orders
+
+PAYMENT MODEL:
+--------------
+- order: Link to Order
+- payment_id: UUID for tracking
+- amount, currency: Payment details
+- payment_method: credit_card, debit_card, upi, net_banking, wallet, cod, bank_transfer
+- status: pending, processing, completed, failed, cancelled, refunded, partially_refunded
+- gateway, gateway_transaction_id: Payment gateway details
+- gateway_response: JSON field for gateway data
+
+COMMISSION MODEL:
+-----------------
+- vendor: Link to vendor user
+- order: Link to Order
+- order_item: Link to OrderItem
+- gross_amount: Item total before commission
+- commission_rate: Percentage rate
+- commission_amount: Calculated commission
+- platform_fee: Fee deducted by platform
+- net_amount: Final amount to vendor
+- status: pending, approved, paid, cancelled
+- timestamps: created_at, approved_at, paid_at
+
+PAYOUT MODEL:
+-------------
+- vendor: Link to vendor user
+- payout_id: UUID for tracking
+- amount: Total payout amount
+- bank_account_number, bank_name, ifsc_code, account_holder_name
+- status: pending, processing, completed, failed, cancelled
+- commissions: Many-to-many link to Commission records
+- transaction_reference: External reference
+- processing_fee: Fee for payout processing
+- net_amount: Final amount transferred
+
+SALESREPORT MODEL:
+------------------
+- report_type: daily, weekly, monthly, yearly
+- report_date: Date for the report
+- vendor: Link to vendor (null for platform reports)
+- total_orders, total_revenue, total_items_sold, total_commissions
+- pending_orders, completed_orders, cancelled_orders, returned_orders
+- average_order_value, total_refunds, net_revenue
+
+===============================================================================
+5. ADMIN INTERFACE GUIDE
+===============================================================================
+
+ORDERS SECTION:
+---------------
+Admin View:
+- See all orders from all vendors
+- Color-coded status badges for quick identification
+- Vendor summary showing breakdown for multi-vendor orders
+- Inline editing of order items
+- Status change tracking with automatic timestamps
+
+Vendor View:
+- Only orders containing their products
+- Cannot see items from other vendors in the same order
+- Can update order item status (mark as shipped, etc.)
+- View customer information and shipping details
+
+Key Features:
+- Advanced filtering by status, date, vendor, payment status
+- Search by order number, customer details, tracking number
+- Bulk actions for status updates
+- Export functionality for reports
+
+COMMISSION MANAGEMENT:
+----------------------
+Admin Features:
+- Approve/reject vendor commissions
+- Bulk approval for multiple commissions
+- Commission rate override capability
+- Platform fee configuration
+- Audit trail of all commission changes
+
+Vendor Features:
+- View their own commission earnings
+- Filter by status and date range
+- Track approval and payment status
+- Download commission statements
+
+PAYOUT MANAGEMENT:
+------------------
+Admin Features:
+- Process vendor payouts
+- Bulk payout processing
+- Bank account verification
+- Transaction reference tracking
+- Payout status management
+
+Vendor Features:
+- Submit payout requests
+- Update bank account information
+- Track payout status and history
+- View transaction details
+
+REPORTING DASHBOARD:
+--------------------
+Admin Dashboard:
+- Platform-wide sales metrics
+- Vendor performance comparison
+- Revenue trends and analytics
+- Order status distribution
+- Payment method analysis
+
+Vendor Dashboard:
+- Personal sales metrics
+- Product performance analysis
+- Commission tracking
+- Customer demographics
+- Monthly/yearly trends
+
+===============================================================================
+6. VENDOR WORKFLOW
+===============================================================================
+
+ONBOARDING PROCESS:
+-------------------
+1. Admin creates vendor user account
+2. Vendor receives login credentials
+3. Vendor logs into admin panel
+4. Vendor creates/updates their brand information
+5. Vendor adds products with pricing and variants
+6. Vendor configures bank account for payouts
+7. Admin verifies vendor information and approves
+
+DAILY OPERATIONS:
+-----------------
+1. Monitor new orders containing their products
+2. Update order item status (processing → shipped)
+3. Add tracking numbers for shipped items
+4. Respond to customer inquiries through admin notes
+5. Monitor commission earnings
+6. Request payouts when threshold is met
+
+ORDER FULFILLMENT:
+------------------
+1. Receive notification of new order (email/dashboard)
+2. Verify product availability
+3. Process the order (packaging, etc.)
+4. Update status to "processing"
+5. Ship the item and add tracking number
+6. Update status to "shipped"
+7. Monitor delivery status
+8. Commission becomes eligible for approval after delivery
+
+COMMISSION & PAYOUT CYCLE:
+--------------------------
+1. Order delivered → Commission status: "pending"
+2. Admin approval → Commission status: "approved"
+3. Vendor requests payout → Payout status: "pending"
+4. Admin processes payout → Payout status: "processing"
+5. Bank transfer completed → Payout status: "completed"
+6. Associated commissions marked as "paid"
+
+===============================================================================
+7. ORDER LIFECYCLE
+===============================================================================
+
+ORDER STATUSES:
+---------------
+PENDING: Order placed, awaiting confirmation
+CONFIRMED: Order confirmed, payment verified
+PROCESSING: Items being prepared for shipment
+SHIPPED: Items dispatched with tracking
+DELIVERED: Items successfully delivered
+CANCELLED: Order cancelled before shipment
+RETURNED: Items returned by customer
+REFUNDED: Refund processed for returned items
+
+PAYMENT STATUSES:
+-----------------
+PENDING: Payment initiated, awaiting confirmation
+PROCESSING: Payment being processed by gateway
+COMPLETED: Payment successful
+FAILED: Payment failed or declined
+CANCELLED: Payment cancelled by user
+REFUNDED: Full refund processed
+PARTIALLY_REFUNDED: Partial refund processed
+
+TYPICAL FLOW:
+-------------
+1. Customer adds items to cart (multiple vendors possible)
+2. Customer proceeds to checkout
+3. Order created with status "PENDING"
+4. Payment processed → "PROCESSING" → "COMPLETED"
+5. Order status updated to "CONFIRMED"
+6. Vendors see order items and begin processing
+7. Vendors update status to "PROCESSING"
+8. Items shipped → status "SHIPPED" with tracking
+9. Items delivered → status "DELIVERED"
+10. Commissions calculated and marked "PENDING"
+11. Admin approves commissions → "APPROVED"
+12. Vendors request payouts
+13. Admin processes payouts → "COMPLETED"
+
+MULTI-VENDOR SCENARIOS:
+-----------------------
+- Each vendor sees only their items in the order
+- Individual item statuses track independently
+- Overall order status reflects the slowest item
+- Commissions calculated separately per vendor
+- Shipping can be handled separately per vendor
+- Customer sees unified order status
+
+===============================================================================
+8. COMMISSION & PAYOUT SYSTEM
+===============================================================================
+
+COMMISSION CALCULATION:
+-----------------------
+Base Formula:
+Commission Amount = (Item Total Price) × (Commission Rate %)
+
+Example:
+Item Price: ₹1000
+Commission Rate: 15%
+Commission Amount: ₹150
+Platform Fee: ₹10
+Net Amount: ₹140
+
+COMMISSION RATES:
+-----------------
+1. Brand-specific rate (highest priority)
+2. Vendor default rate
+3. Platform default rate (10%)
+
+Rate can be set at:
+- Individual brand level
+- Vendor account level
+- Platform default level
+
+PLATFORM FEES:
+---------------
+- Fixed fee per transaction
+- Percentage of commission
+- Payment processing fees
+- Configurable by admin
+
+PAYOUT THRESHOLDS:
+------------------
+- Minimum payout amount (e.g., ₹500)
+- Payout frequency (weekly/monthly)
+- Automatic payout vs manual request
+- Bank transfer limits and charges
+
+PAYOUT PROCESS:
+---------------
+1. Vendor accumulates approved commissions
+2. Vendor submits payout request with bank details
+3. Admin verifies bank account information
+4. Admin processes payout through banking system
+5. Transaction reference recorded
+6. Vendor receives payment confirmation
+7. Commission records marked as "paid"
+
+TAX HANDLING:
+-------------
+- GST calculation on commissions
+- TDS deduction if applicable
+- Invoice generation for vendors
+- Tax reporting for compliance
+
+===============================================================================
+9. REPORTING & ANALYTICS
+===============================================================================
+
+SALES REPORTS:
+--------------
+Platform Level:
+- Total orders and revenue
+- Vendor performance comparison
+- Product category analysis
+- Payment method distribution
+- Geographic sales distribution
+- Customer acquisition metrics
+
+Vendor Level:
+- Personal sales performance
+- Product-wise sales analysis
+- Customer repeat rate
+- Commission earnings tracking
+- Seasonal trends analysis
+- Top-selling products
+
+REPORT TYPES:
+-------------
+Daily Reports:
+- Orders placed and completed
+- Revenue generated
+- Commission earned
+- Items shipped
+
+Weekly Reports:
+- Week-over-week growth
+- Vendor performance ranking
+- Category trends
+- Customer behavior
+
+Monthly Reports:
+- Monthly revenue summary
+- Vendor payout summary
+- Product performance analysis
+- Customer demographics
+
+Yearly Reports:
+- Annual growth metrics
+- Vendor partnership analysis
+- Market trend analysis
+- Financial summary
+
+EXPORT OPTIONS:
+---------------
+- CSV export for spreadsheet analysis
+- PDF reports for presentation
+- JSON API for external systems
+- Scheduled email reports
+
+KEY METRICS:
+------------
+Revenue Metrics:
+- Gross Revenue
+- Net Revenue (after refunds)
+- Commission Revenue
+- Platform Fee Revenue
+
+Order Metrics:
+- Total Orders
+- Average Order Value
+- Order Completion Rate
+- Cancellation Rate
+
+Vendor Metrics:
+- Active Vendors
+- Top Performing Vendors
+- Commission Distribution
+- Payout Summary
+
+Customer Metrics:
+- New vs Returning Customers
+- Customer Lifetime Value
+- Geographic Distribution
+- Payment Preferences
+
+===============================================================================
+10. TROUBLESHOOTING
+===============================================================================
+
+COMMON ISSUES:
+--------------
+
+Issue: Vendor cannot see orders
+Solution: 
+- Verify user has 'vendor' user_type
+- Check user is in 'Vendor' group
+- Ensure is_staff is True
+- Verify brand ownership
+
+Issue: Commission not calculated
+Solution:
+- Check product has associated brand
+- Verify brand has vendor assigned
+- Ensure commission rate is set
+- Check order item vendor assignment
+
+Issue: Payout request fails
+Solution:
+- Verify bank account details
+- Check minimum payout threshold
+- Ensure commissions are approved
+- Verify vendor KYC status
+
+Issue: Order status not updating
+Solution:
+- Check user permissions
+- Verify order item ownership
+- Ensure proper workflow sequence
+- Check for system errors in logs
+
+Issue: Reports showing incorrect data
+Solution:
+- Verify date range filters
+- Check vendor data isolation
+- Refresh report cache
+- Validate calculation logic
+
+PERFORMANCE OPTIMIZATION:
+-------------------------
+- Database indexing on frequently queried fields
+- Caching for reports and analytics
+- Batch processing for commission calculations
+- Async processing for email notifications
+- Database query optimization
+
+SECURITY CONSIDERATIONS:
+------------------------
+- Data isolation between vendors
+- Secure payment processing
+- PCI compliance for card data
+- Bank account encryption
+- Audit logging for all changes
+
+===============================================================================
+11. API ENDPOINTS (Future Enhancement)
+===============================================================================
+
+VENDOR API ENDPOINTS:
+---------------------
+GET /api/v1/vendor/orders/           # List vendor orders
+GET /api/v1/vendor/orders/{id}/      # Order details
+PUT /api/v1/vendor/orders/{id}/      # Update order status
+GET /api/v1/vendor/commissions/     # List commissions
+GET /api/v1/vendor/payouts/         # List payouts
+POST /api/v1/vendor/payouts/        # Request payout
+GET /api/v1/vendor/reports/         # Sales reports
+
+ADMIN API ENDPOINTS:
+--------------------
+GET /api/v1/admin/orders/           # All orders
+GET /api/v1/admin/vendors/          # Vendor management
+PUT /api/v1/admin/commissions/{id}/ # Approve commissions
+POST /api/v1/admin/payouts/         # Process payouts
+GET /api/v1/admin/reports/          # Platform reports
+
+WEBHOOK ENDPOINTS:
+------------------
+POST /webhooks/payment/             # Payment gateway webhooks
+POST /webhooks/shipping/            # Shipping status updates
+POST /webhooks/returns/             # Return processing
+
+===============================================================================
+12. CUSTOMIZATION GUIDE
+===============================================================================
+
+ADDING NEW ORDER STATUSES:
+---------------------------
+1. Add status to OrderStatus.STATUS_CHOICES
+2. Update admin interface colors
+3. Add business logic for status transitions
+4. Update email templates
+5. Modify report calculations
+
+CUSTOM COMMISSION RULES:
+------------------------
+1. Extend Commission model with new fields
+2. Override commission calculation logic
+3. Add admin interface for rule configuration
+4. Update payout processing logic
+
+PAYMENT GATEWAY INTEGRATION:
+-----------------------------
+1. Create payment provider class
+2. Implement webhook handlers
+3. Add payment method to choices
+4. Configure gateway credentials
+5. Test transaction flow
+
+CUSTOM REPORTS:
+---------------
+1. Create new SalesReport fields
+2. Implement calculation logic
+3. Add admin interface views
+4. Create export functionality
+5. Schedule report generation
+
+NOTIFICATION SYSTEM:
+--------------------
+1. Configure email templates
+2. Set up SMS integration
+3. Add webhook notifications
+4. Implement push notifications
+5. Create notification preferences
+
+===============================================================================
+SUPPORT & MAINTENANCE
+===============================================================================
+
+REGULAR MAINTENANCE:
+--------------------
+- Daily backup of order and payment data
+- Weekly report generation and validation
+- Monthly commission reconciliation
+- Quarterly vendor performance review
+- Annual system security audit
+
+MONITORING:
+-----------
+- Order processing errors
+- Payment gateway failures
+- Commission calculation issues
+- Payout processing delays
+- System performance metrics
+
+SUPPORT CONTACTS:
+-----------------
+- Technical Support: [Your support email]
+- Vendor Onboarding: [Vendor support email]
+- Payment Issues: [Payment support email]
+- General Inquiries: [General email]
+
+===============================================================================
+END OF GUIDE
+===============================================================================
+
+This comprehensive guide covers all aspects of the Sales Management System.
+For specific implementation details, refer to the code documentation and
+admin interface help texts.
+
+Last Updated: [Current Date]
+Version: 1.0

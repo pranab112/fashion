@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Image Debug - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1>Image Debug Page</h1>
+    <p>This page helps debug image loading issues.</p>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Product Images Test</h2>
+            
+            {% if deal_products %}
+            <div class="row">
+                {% for product in deal_products %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>{{ product.name }}</h5>
+                            <small class="text-muted">Has images: {{ product.images.exists|yesno:"Yes,No" }}</small>
+                        </div>
+                        <div class="card-body">
+                            {% if product.images.exists %}
+                                {% with product.images.first as image %}
+                                <p><strong>Image URL:</strong> <code>{{ image.image.url }}</code></p>
+                                <p><strong>Image Path:</strong> <code>{{ image.image.name }}</code></p>
+                                
+                                <div class="mb-3">
+                                    <h6>Direct Image Display:</h6>
+                                    <img src="{{ image.image.url }}" alt="{{ product.name }}" class="img-fluid border" style="max-width: 200px;">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6>Link Test:</h6>
+                                    <a href="{{ image.image.url }}" target="_blank" class="btn btn-sm btn-primary">Open Image in New Tab</a>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6>Image Info:</h6>
+                                    <ul class="list-unstyled small">
+                                        <li>Alt text: {{ image.alt_text }}</li>
+                                        <li>Is primary: {{ image.is_primary|yesno:"Yes,No" }}</li>
+                                        <li>Created: {{ image.created_at|date:"M d, Y H:i" }}</li>
+                                    </ul>
+                                </div>
+                                {% endwith %}
+                            {% else %}
+                                <p class="text-warning">No images found for this product.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-warning">No deal products found.</p>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <h2>Troubleshooting</h2>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5>Common Issues</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Browser Cache:</strong> Try hard refresh (Ctrl+F5)</li>
+                        <li><strong>Ad Blockers:</strong> Disable ad blockers</li>
+                        <li><strong>Developer Tools:</strong> Check browser console (F12)</li>
+                        <li><strong>Network Tab:</strong> Look for failed image requests</li>
+                        <li><strong>Direct URL:</strong> Try opening image URLs directly</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Server Status</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Django Server:</strong> Running ✓</p>
+                    <p><strong>Media URL:</strong> <code>/media/</code></p>
+                    <p><strong>Debug Mode:</strong> {{ debug|yesno:"On,Off" }}</p>
+                    <p><strong>Static Files:</strong> <code>/static/</code></p>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Test Static Image</h5>
+                </div>
+                <div class="card-body">
+                    <p>This should always work:</p>
+                    <img src="{% static 'images/logo.png' %}" alt="Logo" class="img-fluid" style="max-width: 100px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}

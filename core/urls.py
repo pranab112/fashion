@@ -39,6 +39,9 @@ urlpatterns = [
     path('newsletter/subscribe/', views.NewsletterSubscribeView.as_view(), name='newsletter_subscribe'),
     path('newsletter/unsubscribe/', views.NewsletterUnsubscribeView.as_view(), name='newsletter_unsubscribe'),
     
+    # Debug pages
+    path('debug/images/', views.DebugImagesView.as_view(), name='debug_images'),
+    
     # Service worker and manifest
     path('sw.js', serve_service_worker, name='service_worker'),
     path('manifest.json', serve_manifest, name='manifest'),

@@ -1,6 +1,8 @@
 from django.views.generic import ListView, DetailView
 from django.db.models import Q
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator
 from .models import Product, Category, Brand, Tag
 from .filters import ProductFilter
 
@@ -97,6 +99,7 @@ class CategoryListView(ListView):
         """Get active root categories."""
         return Category.objects.filter(is_active=True, parent=None)
 
+@method_decorator(never_cache, name='dispatch')
 class CategoryDetailView(DetailView):
     """View for displaying category details and its products."""
     model = Category
@@ -112,10 +115,22 @@ class CategoryDetailView(DetailView):
         # Get products from this category and its subcategories
         try:
             category_ids = self.object.get_descendants(include_self=True).values_list('id', flat=True)
-            context['products'] = Product.objects.active().filter(category_id__in=category_ids).with_related()
+            products = Product.objects.active().filter(category_id__in=category_ids).with_related()
         except Exception:
             # Fallback to simple category filter
-            context['products'] = Product.objects.active().filter(category=self.object).with_related()
+            products = Product.objects.active().filter(category=self.object).with_related()
+        
+        context['products'] = products
+        
+        # Get brands that have products in this category
+        from django.db.models import Count
+        brand_ids = products.values_list('brand', flat=True).distinct()
+        context['brands'] = Brand.objects.filter(
+            id__in=brand_ids, 
+            is_active=True
+        ).annotate(
+            product_count=Count('products', filter=Q(products__id__in=products.values_list('id', flat=True)))
+        ).order_by('-product_count', 'name')[:20]  # Show top 20 brands
         
         # Add site name for template
         context['site_name'] = 'Fashion Store'

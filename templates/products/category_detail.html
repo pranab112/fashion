@@ -1,412 +1,566 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ category.name }} - {{ site_name }}{% endblock %}
+{% block title %}{{ category.name }} - Buy {{ category.name }} Online - {{ site_name }}{% endblock %}
 
 {% block extra_css %}
 <style>
-.category-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 80px 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.category-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 1;
-}
-
-.category-header .container {
-    position: relative;
-    z-index: 2;
-}
-
-.category-title {
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.category-description {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.6;
-}
-
-.category-stats {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 30px;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    display: block;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-.products-section {
-    padding: 60px 0;
-}
-
-.section-header {
-    text-align: center;
-    margin-bottom: 50px;
-}
-
-.section-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #333;
-}
-
-.section-subtitle {
-    font-size: 1.1rem;
-    color: #666;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-    margin-top: 40px;
-}
-
-.product-card {
+/* Myntra-style category page */
+.breadcrumb-section {
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f6;
     background: white;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+}
+
+.breadcrumb-item {
+    color: #282c3f;
+}
+
+.breadcrumb-item a {
+    color: #282c3f;
     text-decoration: none;
-    color: inherit;
 }
 
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+.breadcrumb-item a:hover {
+    color: #ff3f6c;
+}
+
+.breadcrumb-separator {
+    color: #94969f;
+}
+
+.category-container {
+    display: flex;
+    gap: 0;
+    margin-top: 0;
+}
+
+/* Left Sidebar Filters */
+.filters-sidebar {
+    width: 250px;
+    background: white;
+    border-right: 1px solid #d4d5d9;
+    padding: 0;
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+}
+
+.filter-header {
+    padding: 20px 20px 10px;
+    border-bottom: 1px solid #d4d5d9;
+    font-size: 18px;
+    font-weight: 700;
+    color: #282c3f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.clear-all {
+    font-size: 13px;
+    color: #ff3f6c;
+    font-weight: 500;
+    cursor: pointer;
     text-decoration: none;
-    color: inherit;
 }
 
-.product-image {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-    display: block;
-}
-
-.product-info {
+.filter-section {
+    border-bottom: 1px solid #d4d5d9;
     padding: 20px;
 }
 
-.product-brand {
-    font-size: 0.9rem;
-    color: #007bff;
-    font-weight: 600;
-    margin-bottom: 5px;
+.filter-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #282c3f;
+    margin-bottom: 15px;
+    text-transform: uppercase;
 }
 
-.product-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: #333;
-    line-height: 1.3;
+.filter-options {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.product-price {
+.filter-option {
+    margin-bottom: 12px;
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #282c3f;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.filter-count {
+    color: #94969f;
+    margin-left: 5px;
+    font-size: 13px;
+}
+
+/* Price Range Filter */
+.price-range-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.price-input {
+    width: 80px;
+    padding: 5px 10px;
+    border: 1px solid #d4d5d9;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Main Content Area */
+.products-content {
+    flex: 1;
+    background: #f5f5f6;
+    min-height: calc(100vh - 70px);
+}
+
+.products-header {
+    background: white;
+    padding: 16px 20px;
+    border-bottom: 1px solid #d4d5d9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-info {
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+}
+
+.category-heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: #282c3f;
+    margin: 0;
+}
+
+.product-count {
+    font-size: 14px;
+    color: #878b94;
+}
+
+.sort-container {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
 }
 
-.current-price {
-    font-size: 1.2rem;
+.sort-label {
+    font-size: 14px;
+    color: #282c3f;
+    font-weight: 500;
+}
+
+.sort-dropdown {
+    padding: 8px 15px;
+    border: 1px solid #d4d5d9;
+    border-radius: 2px;
+    background: white;
+    font-size: 14px;
+    color: #282c3f;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+/* Product Grid */
+.products-grid-container {
+    padding: 20px;
+}
+
+.myntra-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 30px 20px;
+}
+
+/* Myntra Product Card */
+.myntra-product-card {
+    background: white;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    transition: box-shadow 0.2s ease;
+    position: relative;
+}
+
+.myntra-product-card:hover {
+    box-shadow: 0 2px 16px 4px rgba(40,44,63,.07);
+}
+
+.product-image-wrapper {
+    position: relative;
+    padding-bottom: 133.33%;
+    overflow: hidden;
+    background: #f5f5f6;
+}
+
+.myntra-product-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    opacity: 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.myntra-product-card:hover .wishlist-btn {
+    opacity: 1;
+}
+
+.product-details {
+    padding: 10px 10px 0;
+}
+
+.myntra-brand-name {
+    font-size: 16px;
     font-weight: 700;
-    color: #e74c3c;
+    color: #282c3f;
+    margin: 0 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.original-price {
-    font-size: 1rem;
-    color: #999;
+.myntra-product-name {
+    font-size: 14px;
+    color: #535766;
+    margin: 0 0 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.myntra-price-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.myntra-current-price {
+    font-weight: 700;
+    color: #282c3f;
+}
+
+.myntra-original-price {
+    color: #7e818c;
     text-decoration: line-through;
 }
 
-.discount-badge {
-    background: #e74c3c;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
+.myntra-discount {
+    color: #ff905a;
+    font-weight: 400;
 }
 
-.product-rating {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.stars {
-    color: #ffc107;
-}
-
-.no-products {
+/* No products message */
+.no-products-found {
     text-align: center;
     padding: 80px 20px;
-    color: #666;
+    background: white;
+    margin: 20px;
+    border-radius: 4px;
 }
 
 .no-products-icon {
-    font-size: 4rem;
+    font-size: 60px;
+    color: #d4d5d9;
     margin-bottom: 20px;
-    color: #ddd;
 }
 
-.no-products-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 15px;
+.no-products-heading {
+    font-size: 20px;
+    color: #282c3f;
+    margin-bottom: 10px;
 }
 
-.no-products-message {
-    font-size: 1.1rem;
-    margin-bottom: 30px;
+.no-products-text {
+    font-size: 14px;
+    color: #7e818c;
 }
 
-.btn-browse {
-    display: inline-block;
-    background: #007bff;
-    color: white;
-    padding: 12px 30px;
-    border-radius: 25px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-browse:hover {
-    background: #0056b3;
-    transform: translateY(-2px);
-    text-decoration: none;
-    color: white;
-}
-
-.filters-section {
-    background: #f8f9fa;
-    padding: 30px 0;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.filters-container {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.filter-label {
-    font-weight: 600;
-    color: #333;
-}
-
-.filter-select {
-    padding: 8px 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background: white;
-    font-size: 0.9rem;
-}
-
+/* Mobile Responsive */
 @media (max-width: 768px) {
-    .category-title {
-        font-size: 2rem;
+    .filters-sidebar {
+        display: none;
     }
     
-    .category-stats {
+    .category-container {
         flex-direction: column;
-        gap: 20px;
     }
     
-    .products-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
+    .myntra-product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px 10px;
     }
     
-    .filters-container {
+    .products-header {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
+        gap: 15px;
     }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Category Header -->
-<section class="category-header">
+<!-- Breadcrumb -->
+<section class="breadcrumb-section">
     <div class="container">
-        <h1 class="category-title">{{ category.name }}</h1>
-        {% if category.description %}
-        <p class="category-description">{{ category.description }}</p>
-        {% endif %}
-        
-        <div class="category-stats">
-            <div class="stat-item">
-                <span class="stat-number">{{ products.count }}</span>
-                <span class="stat-label">Products</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">{{ category.products.count }}</span>
-                <span class="stat-label">Total Items</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">{{ category.brand_set.count }}</span>
-                <span class="stat-label">Brands</span>
-            </div>
-        </div>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-separator">/</li>
+            {% if category.parent %}
+            <li class="breadcrumb-item">
+                <a href="{{ category.parent.get_absolute_url }}">{{ category.parent.name }}</a>
+            </li>
+            <li class="breadcrumb-separator">/</li>
+            {% endif %}
+            <li class="breadcrumb-item active">
+                {{ category.name }}
+            </li>
+        </ol>
     </div>
 </section>
 
-<!-- Filters Section -->
-<section class="filters-section">
-    <div class="container">
-        <div class="filters-container">
-            <div class="filter-group">
-                <label class="filter-label">Sort By:</label>
-                <select class="filter-select" id="sortFilter">
-                    <option value="newest">Newest First</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="popular">Most Popular</option>
-                    <option value="rating">Highest Rated</option>
-                </select>
+<div class="category-container">
+    <!-- Left Sidebar Filters -->
+    <aside class="filters-sidebar">
+        <div class="filter-header">
+            FILTERS
+            <a href="#" class="clear-all">CLEAR ALL</a>
+        </div>
+        
+        <!-- Categories Filter -->
+        {% if category.children.exists %}
+        <div class="filter-section">
+            <h3 class="filter-title">Categories</h3>
+            <ul class="filter-options">
+                {% for child in category.children.all %}
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="category" value="{{ child.slug }}">
+                        {{ child.name }}
+                        <span class="filter-count">({{ child.products.count }})</span>
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Brand Filter -->
+        <div class="filter-section">
+            <h3 class="filter-title">Brand</h3>
+            <ul class="filter-options">
+                {% for brand in brands %}
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="brand" value="{{ brand.slug }}">
+                        {{ brand.name }}
+                        <span class="filter-count">({{ brand.product_count }})</span>
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- Price Filter -->
+        <div class="filter-section">
+            <h3 class="filter-title">Price</h3>
+            <div class="price-range-inputs">
+                <input type="number" class="price-input" placeholder="Min" min="0">
+                <span>to</span>
+                <input type="number" class="price-input" placeholder="Max" min="0">
+            </div>
+        </div>
+        
+        <!-- Discount Filter -->
+        <div class="filter-section">
+            <h3 class="filter-title">Discount</h3>
+            <ul class="filter-options">
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="discount" value="10">
+                        10% and above
+                    </label>
+                </li>
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="discount" value="20">
+                        20% and above
+                    </label>
+                </li>
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="discount" value="30">
+                        30% and above
+                    </label>
+                </li>
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="discount" value="40">
+                        40% and above
+                    </label>
+                </li>
+                <li class="filter-option">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" name="discount" value="50">
+                        50% and above
+                    </label>
+                </li>
+            </ul>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="products-content">
+        <!-- Products Header -->
+        <div class="products-header">
+            <div class="category-info">
+                <h1 class="category-heading">{{ category.name }} For {{ category.parent.name|default:"All" }}</h1>
+                <span class="product-count">- {{ products.count }} items</span>
             </div>
             
-            <div class="filter-group">
-                <label class="filter-label">Show:</label>
-                <select class="filter-select" id="limitFilter">
-                    <option value="12">12 per page</option>
-                    <option value="24">24 per page</option>
-                    <option value="48">48 per page</option>
-                    <option value="all">All products</option>
+            <div class="sort-container">
+                <span class="sort-label">Sort by :</span>
+                <select class="sort-dropdown" id="sortBy">
+                    <option value="recommended">Recommended</option>
+                    <option value="new">What's New</option>
+                    <option value="popularity">Popularity</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="discount">Better Discount</option>
                 </select>
             </div>
         </div>
-    </div>
-</section>
-
-<!-- Products Section -->
-<section class="products-section">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">All {{ category.name }}</h2>
-            <p class="section-subtitle">Discover our complete collection of {{ category.name|lower }} from top brands</p>
-        </div>
         
-        {% if products %}
-        <div class="products-grid">
-            {% for product in products %}
-            <a href="{% url 'products:product_detail' product.slug %}" class="product-card">
-                <div class="product-image-container">
-                    {% if product.images.exists %}
-                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-image">
-                    {% else %}
-                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}" class="product-image">
-                    {% endif %}
-                </div>
-                
-                <div class="product-info">
-                    <div class="product-brand">{{ product.brand.name }}</div>
-                    <h3 class="product-name">{{ product.name }}</h3>
-                    
-                    <div class="product-price">
-                        <span class="current-price">₹{{ product.discounted_price|floatformat:0 }}</span>
-                        {% if product.discount_percentage %}
-                        <span class="original-price">₹{{ product.base_price|floatformat:0 }}</span>
-                        <span class="discount-badge">{{ product.discount_percentage }}% OFF</span>
+        <!-- Products Grid -->
+        <div class="products-grid-container">
+            {% if products %}
+            <div class="myntra-product-grid">
+                {% for product in products %}
+                <a href="{% url 'products:product_detail' product.slug %}" class="myntra-product-card">
+                    <div class="product-image-wrapper">
+                        {% if product.images.exists %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="myntra-product-image">
+                        {% else %}
+                        <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}" class="myntra-product-image">
                         {% endif %}
+                        <button class="wishlist-btn" onclick="event.preventDefault(); addToWishlist({{ product.id }});">
+                            <i class="far fa-heart"></i>
+                        </button>
                     </div>
                     
-                    <div class="product-rating">
-                        <span class="stars">★★★★☆</span>
-                        <span>(4.2)</span>
+                    <div class="product-details">
+                        <h3 class="myntra-brand-name">{{ product.brand.name }}</h3>
+                        <p class="myntra-product-name">{{ product.name }}</p>
+                        
+                        <div class="myntra-price-info">
+                            <span class="myntra-current-price">Rs. {{ product.discounted_price|floatformat:0 }}</span>
+                            {% if product.discount_percentage > 0 %}
+                            <span class="myntra-original-price">Rs. {{ product.base_price|floatformat:0 }}</span>
+                            <span class="myntra-discount">({{ product.discount_percentage }}% OFF)</span>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="no-products">
-            <div class="no-products-icon">
-                <i class="fas fa-box-open"></i>
+                </a>
+                {% endfor %}
             </div>
-            <h3 class="no-products-title">No Products Found</h3>
-            <p class="no-products-message">
-                We don't have any products in this category yet, but we're working on adding more!
-            </p>
-            <a href="{% url 'products:product_list' %}" class="btn-browse">Browse All Products</a>
+            {% else %}
+            <div class="no-products-found">
+                <div class="no-products-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h2 class="no-products-heading">No products found</h2>
+                <p class="no-products-text">Try adjusting your filters or browse other categories</p>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
-</section>
+    </main>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Sort filter functionality
-    const sortFilter = document.getElementById('sortFilter');
-    const limitFilter = document.getElementById('limitFilter');
-    
-    if (sortFilter) {
-        sortFilter.addEventListener('change', function() {
-            // Add sorting functionality here
-            console.log('Sort by:', this.value);
-        });
-    }
-    
-    if (limitFilter) {
-        limitFilter.addEventListener('change', function() {
-            // Add limit functionality here
-            console.log('Show:', this.value);
-        });
-    }
+// Add to wishlist function
+function addToWishlist(productId) {
+    console.log('Add to wishlist:', productId);
+    // Add your wishlist logic here
+}
+
+// Sort functionality
+document.getElementById('sortBy').addEventListener('change', function() {
+    const sortValue = this.value;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('sort', sortValue);
+    window.location.href = currentUrl.toString();
+});
+
+// Filter functionality
+document.querySelectorAll('.filter-checkbox input').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        // Add filter logic here
+        console.log('Filter changed:', this.name, this.value, this.checked);
+    });
+});
+
+// Clear all filters
+document.querySelector('.clear-all').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.filter-checkbox input:checked').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    // Reset to base URL
+    window.location.href = window.location.pathname;
 });
 </script>
 {% endblock %}

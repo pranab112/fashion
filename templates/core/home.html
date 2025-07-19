@@ -299,10 +299,10 @@
         
         {% if hero_banners|length > 1 or not hero_banners %}
         <!-- Navigation Buttons -->
-        <button class="slider-btn slider-btn-prev" onclick="heroSlider.previousSlide()" aria-label="Previous slide">
+        <button class="slider-btn slider-btn-prev" onclick="window.heroSliderControls && window.heroSliderControls.previousSlide()" aria-label="Previous slide">
             <i class="fas fa-chevron-left"></i>
         </button>
-        <button class="slider-btn slider-btn-next" onclick="heroSlider.nextSlide()" aria-label="Next slide">
+        <button class="slider-btn slider-btn-next" onclick="window.heroSliderControls && window.heroSliderControls.nextSlide()" aria-label="Next slide">
             <i class="fas fa-chevron-right"></i>
         </button>
         
@@ -310,12 +310,12 @@
         <div class="slider-dots" id="sliderDots">
             {% if hero_banners %}
                 {% for banner in hero_banners %}
-                <button class="slider-dot{% if forloop.first %} active{% endif %}" onclick="heroSlider.goToSlide({{ forloop.counter0 }})" aria-label="Go to slide {{ forloop.counter }}"></button>
+                <button class="slider-dot{% if forloop.first %} active{% endif %}" onclick="window.heroSliderControls && window.heroSliderControls.goToSlide({{ forloop.counter0 }})" aria-label="Go to slide {{ forloop.counter }}"></button>
                 {% endfor %}
             {% else %}
-                <button class="slider-dot active" onclick="heroSlider.goToSlide(0)" aria-label="Go to slide 1"></button>
-                <button class="slider-dot" onclick="heroSlider.goToSlide(1)" aria-label="Go to slide 2"></button>
-                <button class="slider-dot" onclick="heroSlider.goToSlide(2)" aria-label="Go to slide 3"></button>
+                <button class="slider-dot active" onclick="window.heroSliderControls && window.heroSliderControls.goToSlide(0)" aria-label="Go to slide 1"></button>
+                <button class="slider-dot" onclick="window.heroSliderControls && window.heroSliderControls.goToSlide(1)" aria-label="Go to slide 2"></button>
+                <button class="slider-dot" onclick="window.heroSliderControls && window.heroSliderControls.goToSlide(2)" aria-label="Go to slide 3"></button>
             {% endif %}
         </div>
         {% endif %}

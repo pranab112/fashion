@@ -30,9 +30,15 @@
             <div class="sticky top-4">
                 <!-- Main Image -->
                 <div class="relative pb-[100%] mb-4 rounded-lg overflow-hidden">
-                    <img id="main-image" src="{{ product.get_primary_image.url }}"
+                    {% if product.get_primary_image %}
+                    <img id="main-image" src="{{ product.get_primary_image.image.url }}"
                          alt="{{ product.name }}"
                          class="absolute inset-0 w-full h-full object-cover">
+                    {% else %}
+                    <img id="main-image" src="{% static 'images/product-placeholder.jpg' %}"
+                         alt="{{ product.name }}"
+                         class="absolute inset-0 w-full h-full object-cover">
+                    {% endif %}
                     
                     {% if product.is_on_sale %}
                     <span class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
@@ -44,7 +50,7 @@
                 <!-- Thumbnail Gallery -->
                 <div class="grid grid-cols-4 gap-4">
                     {% for image in product.images.all %}
-                    <button onclick="changeMainImage('{{ image.url }}')"
+                    <button onclick="changeMainImage('{{ image.image.url }}')"
                             class="relative pb-[100%] rounded-lg overflow-hidden border-2 hover:border-pink-600 transition duration-200
                                    {% if forloop.first %}border-pink-600{% else %}border-transparent{% endif %}">
                         <img src="{{ image.get_thumbnail_url }}"
@@ -318,9 +324,15 @@
                 <a href="{% url 'products:product_detail' product.slug %}"
                    class="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition duration-200">
                     <div class="relative pb-[100%]">
-                        <img src="{{ product.get_primary_image.url }}"
+                        {% if product.get_primary_image %}
+                        <img src="{{ product.get_primary_image.image.url }}"
                              alt="{{ product.name }}"
                              class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                        {% else %}
+                        <img src="{% static 'images/product-placeholder.jpg' %}"
+                             alt="{{ product.name }}"
+                             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                        {% endif %}
                         {% if product.is_on_sale %}
                         <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-sm">
                             {{ product.discount_percentage }}% OFF
